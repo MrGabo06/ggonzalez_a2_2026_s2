@@ -5,7 +5,7 @@
 
 #include "bench.h"
 #include "image.h"
-#include "raytracer.h"
+#include "render.h"
 #include "scene.h"
 
 int main(int argc, char** argv) {
@@ -30,12 +30,8 @@ int main(int argc, char** argv) {
     // Solo se mide el render: construir la escena y guardar el archivo quedan fuera.
     double t0 = now_seconds();
 
-    // Un pixel a la vez, fila por fila. Cada pixel es un rayo que sale de la camara.
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            img.set_pixel(x, y, render_pixel(scene, x, y, width, height, depth));
-        }
-    }
+    // Toda la imagen como un unico rectangulo, en orden. Un solo hilo hace todo el trabajo.
+    render_region(scene, img, 0, 0, width, height, depth);
 
     double t1 = now_seconds();
 
