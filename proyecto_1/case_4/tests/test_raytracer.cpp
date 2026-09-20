@@ -1,6 +1,6 @@
 // tests/test_raytracer.cpp - Pruebas de raytracer.h/.cpp con casos calculados a mano.
 // Compilar y correr desde proyecto_1/case_4:
-//   g++ -std=c++17 -Wall -Wextra -I. scene.cpp raytracer.cpp tests/test_raytracer.cpp -o /tmp/test_rt && /tmp/test_rt
+//   g++ -std=c++17 -Wall -Wextra -Isrc src/scene.cpp src/raytracer.cpp tests/test_raytracer.cpp -o /tmp/test_rt && /tmp/test_rt
 #include <cstdio>
 #include <cmath>
 #include "raytracer.h"

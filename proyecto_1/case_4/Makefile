@@ -7,17 +7,18 @@
 # C++ 
 CXX      := g++
 # -O2: optimizacion moderada (mediciones realistas).
-CXXFLAGS := -O2 -Wall -Wextra -std=c++17 -I.
+CXXFLAGS := -O2 -Wall -Wextra -std=c++17 -Isrc
 # -pthread: necesario para enlazar std::thread en Linux.
 LDFLAGS  := -pthread
 
+SRC_DIR     := src
 ENGINES_DIR := engines
 BUILD       := build
 RESULTS     := results
 
-COMMON_SRC := $(wildcard *.cpp)
-COMMON_OBJ := $(patsubst %.cpp,$(BUILD)/%.o,$(COMMON_SRC))
-COMMON_HDR := $(wildcard *.h)
+COMMON_SRC := $(wildcard $(SRC_DIR)/*.cpp)
+COMMON_OBJ := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD)/%.o,$(COMMON_SRC))
+COMMON_HDR := $(wildcard $(SRC_DIR)/*.h)
 
 # Cada engines/X.cpp produce un ejecutable build/X (sequential,
 # fineGrained, coarseGrained, smt, cmp) segun los archivos que existan.
@@ -53,8 +54,8 @@ clean: ## Remove build artifacts and results
 # Build rules
 # =================================================
 
-# Regla generica: <raiz>/foo.cpp -> build/foo.o (objeto comun).
-$(BUILD)/%.o: %.cpp $(COMMON_HDR)
+# Regla generica: src/foo.cpp -> build/foo.o (objeto comun).
+$(BUILD)/%.o: $(SRC_DIR)/%.cpp $(COMMON_HDR)
 	@mkdir -p $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

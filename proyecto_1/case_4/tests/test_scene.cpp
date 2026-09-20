@@ -1,6 +1,6 @@
 // tests/test_scene.cpp - Pruebas de vec3.h y scene.h/.cpp (no es parte del ray tracer).
 // Compilar y correr desde proyecto_1/case_4:
-//   g++ -std=c++17 -Wall -Wextra -I. scene.cpp tests/test_scene.cpp -o /tmp/test_scene && /tmp/test_scene
+//   g++ -std=c++17 -Wall -Wextra -Isrc src/scene.cpp tests/test_scene.cpp -o /tmp/test_scene && /tmp/test_scene
 #include <cstdio>
 #include <cmath>
 #include "scene.h"

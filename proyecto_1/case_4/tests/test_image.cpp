@@ -1,6 +1,6 @@
 // tests/test_image.cpp - Pruebas de image.h/.cpp.
 // Compilar y correr desde proyecto_1/case_4:
-//   g++ -std=c++17 -Wall -Wextra -I. image.cpp tests/test_image.cpp -o /tmp/test_image && /tmp/test_image
+//   g++ -std=c++17 -Wall -Wextra -Isrc src/image.cpp tests/test_image.cpp -o /tmp/test_image && /tmp/test_image
 #include <cstdio>
 #include <fstream>
 #include <iterator>
