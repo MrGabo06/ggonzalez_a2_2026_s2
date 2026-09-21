@@ -255,3 +255,18 @@ void NBodyDrift(NBodySystem *sys, double step, int first, int last)
         sys->PosZ[i] += step * sys->VelZ[i];
     }
 }
+
+void NBodyStep(NBodySystem *sys, double step)
+{
+    /* Phase 1: half kick with the old accelerations. */
+    NBodyKick(sys, 0.5 * step, 0, sys->Count);
+
+    /* Phase 2: move every body with the updated velocities. */
+    NBodyDrift(sys, step, 0, sys->Count);
+
+    /* Phase 3: recompute accelerations for the new positions (the O(N^2) part). */
+    NBodyComputeAcceleration(sys, 0, sys->Count);
+
+    /* Phase 4: half kick with the new accelerations. */
+    NBodyKick(sys, 0.5 * step, 0, sys->Count);
+}

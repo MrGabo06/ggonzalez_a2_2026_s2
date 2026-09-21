@@ -128,4 +128,16 @@ void NBodyKick(NBodySystem *sys, double halfStep, int first, int last);
  */
 void NBodyDrift(NBodySystem *sys, double step, int first, int last);
 
+/*
+ * Purpose:    Advances the whole system by one time step using velocity-Verlet:
+ *             half kick, drift, force computation, half kick.
+ * Why:        Groups the four phases in the right order. This is the sequential
+ *             (single thread) reference that every execution model is compared with.
+ * Parameters: sys  - system whose accelerations are already valid for the current
+ *                    positions (compute them once before the first step).
+ *             step - time step (dt).
+ * Returns:    Nothing (positions, velocities and accelerations are updated).
+ */
+void NBodyStep(NBodySystem *sys, double step);
+
 #endif /* NBODY_H */
