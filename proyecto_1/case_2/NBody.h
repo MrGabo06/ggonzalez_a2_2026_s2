@@ -89,4 +89,17 @@ double NBodyTotalMass(const NBodySystem *sys);
  */
 void NBodyTotalMomentum(const NBodySystem *sys, double *px, double *py, double *pz);
 
+/*
+ * Purpose:    Computes the gravitational acceleration of the bodies in the range
+ *             [first, last) caused by ALL bodies of the system.
+ * Why:        This is the O(N^2) core of the simulation. It receives a range so
+ *             that, later, each thread can compute its own slice.
+ * Parameters: sys   - initialized system; positions and masses are read,
+ *                     AccX/AccY/AccZ are written only for indices in the range.
+ *             first - first body to compute (inclusive).
+ *             last  - one past the last body to compute (exclusive).
+ * Returns:    Nothing (results are stored in sys->AccX, AccY and AccZ).
+ */
+void NBodyComputeAcceleration(NBodySystem *sys, int first, int last);
+
 #endif /* NBODY_H */

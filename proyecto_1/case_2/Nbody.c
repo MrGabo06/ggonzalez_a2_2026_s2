@@ -9,6 +9,10 @@
 
 #include "NBody.h"
 
+#include <math.h>
+
+#include <stdlib.h>
+
 /* Initial velocities are drawn uniformly from [-INITIAL_SPEED_SCALE, +INITIAL_SPEED_SCALE]. */
 #define INITIAL_SPEED_SCALE 0.1
 
@@ -20,6 +24,15 @@
 
 /* 2^53 as a double: converts a 53-bit integer into a value in [0, 1). */
 #define TWO_POW_53 9007199254740992.0
+
+/* Gravitational constant in normalized units (G = 1). */
+#define GRAVITATIONAL_CONSTANT 1.0
+
+/* Plummer softening length: keeps the force finite when two bodies get very close. */
+#define SOFTENING 0.05
+
+/* Softening squared, computed once at compile time because the force loop uses it. */
+#define SOFTENING_SQUARED (SOFTENING * SOFTENING)
 
 /*
  * Purpose:    Returns the next pseudo-random number in [0, 1).
@@ -176,5 +189,49 @@ void NBodyInit(NBodySystem *sys, uint64_t seed)
         sys->VelX[i] -= px / totalMass;
         sys->VelY[i] -= py / totalMass;
         sys->VelZ[i] -= pz / totalMass;
+    }
+}
+
+void NBodyComputeAcceleration(NBodySystem *sys, int first, int last)
+{
+    for (int i = first; i < last; i++)
+    {
+        /* Position of body i, copied once into local variables. */
+        double posXi = sys->PosX[i];
+        double posYi = sys->PosY[i];
+        double posZi = sys->PosZ[i];
+
+        /* Running totals of the pull that all other bodies exert on body i. */
+        double sumX = 0.0;
+        double sumY = 0.0;
+        double sumZ = 0.0;
+
+                for (int j = 0; j < sys->Count; j++)
+        {
+            /* Vector pointing from body i to body j. */
+            double dx = sys->PosX[j] - posXi;
+            double dy = sys->PosY[j] - posYi;
+            double dz = sys->PosZ[j] - posZi;
+
+            /* Squared distance between the two bodies, plus the softening. */
+            double distSquared = dx * dx + dy * dy + dz * dz + SOFTENING_SQUARED;
+
+            /* 1 / distance^3, built from one square root and multiplications. */
+            double invDist = 1.0 / sqrt(distSquared);
+            double invDistCubed = invDist * invDist * invDist;
+
+            /* How strongly body j pulls on body i (before applying the direction). */
+            double factor = sys->Mass[j] * invDistCubed;
+
+            /* Add the pull of body j, pointing along the vector (dx, dy, dz). */
+            sumX += dx * factor;
+            sumY += dy * factor;
+            sumZ += dz * factor;
+        }
+
+                /* Store the total acceleration of body i (G is applied once, here). */
+        sys->AccX[i] = GRAVITATIONAL_CONSTANT * sumX;
+        sys->AccY[i] = GRAVITATIONAL_CONSTANT * sumY;
+        sys->AccZ[i] = GRAVITATIONAL_CONSTANT * sumZ;
     }
 }
