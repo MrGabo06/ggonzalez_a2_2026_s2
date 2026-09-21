@@ -245,3 +245,13 @@ void NBodyKick(NBodySystem *sys, double halfStep, int first, int last)
         sys->VelZ[i] += halfStep * sys->AccZ[i];
     }
 }
+
+void NBodyDrift(NBodySystem *sys, double step, int first, int last)
+{
+    for (int i = first; i < last; i++)
+    {
+        sys->PosX[i] += step * sys->VelX[i];
+        sys->PosY[i] += step * sys->VelY[i];
+        sys->PosZ[i] += step * sys->VelZ[i];
+    }
+}

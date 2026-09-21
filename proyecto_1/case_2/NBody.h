@@ -115,4 +115,17 @@ void NBodyComputeAcceleration(NBodySystem *sys, int first, int last);
  */
 void NBodyKick(NBodySystem *sys, double halfStep, int first, int last);
 
+/*
+ * Purpose:    Moves the bodies in [first, last) using their current velocity:
+ *             Pos = Pos + step * Vel.
+ * Why:        Second phase of every velocity-Verlet step. It uses the full time
+ *             step, unlike the kicks that use half.
+ * Parameters: sys   - system with valid velocities.
+ *             step  - the full time step (dt).
+ *             first - first body to move (inclusive).
+ *             last  - one past the last body to move (exclusive).
+ * Returns:    Nothing (positions are updated in place).
+ */
+void NBodyDrift(NBodySystem *sys, double step, int first, int last);
+
 #endif /* NBODY_H */
