@@ -235,3 +235,13 @@ void NBodyComputeAcceleration(NBodySystem *sys, int first, int last)
         sys->AccZ[i] = GRAVITATIONAL_CONSTANT * sumZ;
     }
 }
+
+void NBodyKick(NBodySystem *sys, double halfStep, int first, int last)
+{
+    for (int i = first; i < last; i++)
+    {
+        sys->VelX[i] += halfStep * sys->AccX[i];
+        sys->VelY[i] += halfStep * sys->AccY[i];
+        sys->VelZ[i] += halfStep * sys->AccZ[i];
+    }
+}

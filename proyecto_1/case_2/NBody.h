@@ -102,4 +102,17 @@ void NBodyTotalMomentum(const NBodySystem *sys, double *px, double *py, double *
  */
 void NBodyComputeAcceleration(NBodySystem *sys, int first, int last);
 
+/*
+ * Purpose:    Updates the velocity of the bodies in [first, last) using their
+ *             current acceleration: Vel = Vel + halfStep * Acc.
+ * Why:        First and last phase of every velocity-Verlet step. It is called
+ *             twice per step, each time with half of the time step.
+ * Parameters: sys      - system with valid accelerations (AccX/AccY/AccZ).
+ *             halfStep - half of the time step (dt / 2).
+ *             first    - first body to update (inclusive).
+ *             last     - one past the last body to update (exclusive).
+ * Returns:    Nothing (velocities are updated in place).
+ */
+void NBodyKick(NBodySystem *sys, double halfStep, int first, int last);
+
 #endif /* NBODY_H */
