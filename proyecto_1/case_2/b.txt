@@ -1,4 +1,0 @@
-Bodies:         1024
-Total mass:     1
-Total momentum: (-9.487e-20, 6.607e-19, -3.104e-18)
-Body 0 position: (0.767942, 0.124392, 0.896254)
