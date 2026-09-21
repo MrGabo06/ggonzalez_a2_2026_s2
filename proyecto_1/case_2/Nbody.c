@@ -270,3 +270,15 @@ void NBodyStep(NBodySystem *sys, double step)
     /* Phase 4: half kick with the new accelerations. */
     NBodyKick(sys, 0.5 * step, 0, sys->Count);
 }
+
+double NBodyChecksum(const NBodySystem *sys)
+{
+    double sum = 0.0;
+
+    for (int i = 0; i < sys->Count; i++)
+    {
+        sum += sys->PosX[i] * sys->PosX[i] + sys->PosY[i] * sys->PosY[i] + sys->PosZ[i] * sys->PosZ[i];
+    }
+
+    return sum;
+}

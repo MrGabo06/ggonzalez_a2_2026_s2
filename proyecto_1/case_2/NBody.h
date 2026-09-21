@@ -140,4 +140,14 @@ void NBodyDrift(NBodySystem *sys, double step, int first, int last);
  */
 void NBodyStep(NBodySystem *sys, double step);
 
+/*
+ * Purpose:    Computes a single number that summarizes the current positions.
+ * Why:        Every execution model must reach the same final state from the same
+ *             seed, so this fingerprint lets us compare them without printing
+ *             every body.
+ * Parameters: sys - system to summarize.
+ * Returns:    Sum of the squared position components of all bodies.
+ */
+double NBodyChecksum(const NBodySystem *sys);
+
 #endif /* NBODY_H */
