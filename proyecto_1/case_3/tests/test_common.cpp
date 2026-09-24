@@ -1,5 +1,6 @@
 // Minimal tests for the common utilities and the stencil kernel.
 // Built with -fsanitize=address,undefined to catch out-of-range access.
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -45,6 +46,13 @@ static void test_affinity() {
     assert(common::hw_threads() >= 1u);
 }
 
+static void test_cpus_cores_first_is_a_permutation() {
+    std::vector<int> cpus = common::cpus_cores_first();
+    assert(cpus.size() == common::hw_threads());
+    std::sort(cpus.begin(), cpus.end());
+    for (std::size_t k = 0; k < cpus.size(); ++k) assert(cpus[k] == static_cast<int>(k));
+}
+
 // A uniform fixed boundary drives the whole interior to that same value at
 // equilibrium, so the center reaching V is the observable convergence check.
 static void test_stencil_convergence() {
@@ -74,6 +82,7 @@ int main() {
     test_mesh_io_roundtrip();
     test_verify();
     test_affinity();
+    test_cpus_cores_first_is_a_permutation();
     test_stencil_convergence();
     std::puts("OK: common utilities and stencil kernel");
     return 0;

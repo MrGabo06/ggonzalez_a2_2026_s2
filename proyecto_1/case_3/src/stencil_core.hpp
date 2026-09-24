@@ -1,5 +1,7 @@
 #pragma once
+#include <algorithm>
 #include <cstddef>
+#include <vector>
 
 namespace stencil {
 
@@ -32,6 +34,11 @@ inline void jacobi_rows(const double* u, double* u_next, int N, double c, int r0
             }
         }
     }
+}
+
+inline void init_hot_top_edge(std::vector<double>& u, int N) {
+    std::fill(u.begin(), u.end(), 0.0);
+    std::fill(u.begin(), u.begin() + N, 100.0);
 }
 
 inline void jacobi_step(const double* u, double* u_next, int N, double c) {
