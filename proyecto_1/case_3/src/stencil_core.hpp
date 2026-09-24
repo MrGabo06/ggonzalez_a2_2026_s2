@@ -19,7 +19,9 @@ struct Params {
 
 // Boundary cells are held fixed (Dirichlet); the row range enables domain
 // decomposition into horizontal strips.
-inline void jacobi_rows(const double* u, double* u_next, int N, double c, int r0,
+// noinline keeps a single machine-code copy that every model calls, so no model
+// gets a differently scheduled or aligned kernel (see JCC_FIX in the Makefile).
+[[gnu::noinline]] inline void jacobi_rows(const double* u, double* u_next, int N, double c, int r0,
                         int r1) {
     for (int i = r0; i < r1; ++i) {
         const std::size_t row = static_cast<std::size_t>(i) * N;
@@ -34,6 +36,15 @@ inline void jacobi_rows(const double* u, double* u_next, int N, double c, int r0
             }
         }
     }
+}
+
+struct Strip {
+    int r0;
+    int r1;
+};
+
+inline Strip strip_of(int k, int threads, int N) {
+    return {k * N / threads, (k + 1) * N / threads};
 }
 
 inline void init_hot_top_edge(std::vector<double>& u, int N) {

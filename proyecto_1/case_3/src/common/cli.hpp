@@ -15,17 +15,23 @@ struct Config {
     double dt = 0.2;
     double dx = 1.0;
     int threads = 1;
+    int quantum = 1;
+    int cache_kib = 0;
     bool pin = true;
+    bool trace = false;
     std::string out_bin;
     std::string out_csv;
     bool quiet = false;
 };
 
-enum class Threading { sequential, parallel };
+enum class Threading { sequential, parallel, fine_grained, coarse_grained };
 
 inline Config parse_args(int argc, char** argv, Threading threading) {
     Config c;
-    const bool parallel = threading == Threading::parallel;
+    const bool threaded = threading != Threading::sequential;
+    if (threaded) c.threads = 4;
+    const bool fine = threading == Threading::fine_grained;
+    const bool coarse = threading == Threading::coarse_grained;
     for (int i = 1; i < argc; ++i) {
         auto value_of = [&](const char* name) -> const char* {
             if (i + 1 >= argc) {
@@ -42,8 +48,11 @@ inline Config parse_args(int argc, char** argv, Threading threading) {
         else if (!std::strcmp(argv[i], "--out")) c.out_bin = value_of("--out");
         else if (!std::strcmp(argv[i], "--csv")) c.out_csv = value_of("--csv");
         else if (!std::strcmp(argv[i], "--quiet")) c.quiet = true;
-        else if (parallel && !std::strcmp(argv[i], "--threads")) c.threads = std::atoi(value_of("--threads"));
-        else if (parallel && !std::strcmp(argv[i], "--no-pin")) c.pin = false;
+        else if (threaded && !std::strcmp(argv[i], "--threads")) c.threads = std::atoi(value_of("--threads"));
+        else if (threaded && !std::strcmp(argv[i], "--no-pin")) c.pin = false;
+        else if (fine && !std::strcmp(argv[i], "--quantum")) c.quantum = std::atoi(value_of("--quantum"));
+        else if (coarse && !std::strcmp(argv[i], "--cache-kib")) c.cache_kib = std::atoi(value_of("--cache-kib"));
+        else if (threaded && !std::strcmp(argv[i], "--trace")) c.trace = true;
         else {
             std::fprintf(stderr, "unknown argument: %s\n", argv[i]);
             std::exit(2);
@@ -59,6 +68,14 @@ inline double coeff_or_exit(const Config& cfg) {
     }
     if (cfg.threads < 1 || cfg.threads > cfg.N) {
         std::fprintf(stderr, "threads must be in [1, N]\n");
+        std::exit(2);
+    }
+    if (cfg.quantum < 1) {
+        std::fprintf(stderr, "quantum must be >= 1\n");
+        std::exit(2);
+    }
+    if (cfg.cache_kib < 0) {
+        std::fprintf(stderr, "cache-kib must be >= 0 (0 = detect L2)\n");
         std::exit(2);
     }
     const double c = stencil::Params{cfg.N, cfg.alpha, cfg.dt, cfg.dx}.coeff();
