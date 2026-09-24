@@ -1,8 +1,4 @@
-// fineGrained.cpp - Multihilo de grano fino (std::thread) con reparto dinamico.
-// A diferencia de coarseGrained (franjas fijas repartidas de antemano), aca
-// hay un contador compartido: cada hilo pide la siguiente fila libre, la
-// pinta entera y vuelve a pedir otra. La sincronizacion pasa una vez por
-// fila en vez de una sola vez al final (join).
+// fineGrained.cpp - grano fino: contador atomico compartido, reparto fila por fila.
 // Uso: fineGrained <width> <height> <spheres> <depth> <threads> [salida.bmp]
 #include <atomic>
 #include <cstdio>
@@ -35,12 +31,8 @@ int main(int argc, char** argv) {
     Scene scene = build_scene(spheres, 42);
     Image img(width, height);
 
-    // Contador compartido: la siguiente fila libre para pintar. Cada hilo lo
-    // incrementa con fetch_add antes de pintar, asi ningun hilo repite ni se
-    // salta una fila sin necesidad de un mutex.
-    std::atomic<int> next_row{0};
+    std::atomic<int> next_row{0};  // siguiente fila libre
 
-    // Se mide desde antes de crear los hilos hasta despues de la barrera.
     double t0 = now_seconds();
 
     std::vector<std::thread> pool;
@@ -54,7 +46,6 @@ int main(int argc, char** argv) {
         });
     }
 
-    // Barrera de fin de cuadro: espera a que todos los hilos terminen.
     for (std::thread& th : pool) th.join();
 
     double t1 = now_seconds();

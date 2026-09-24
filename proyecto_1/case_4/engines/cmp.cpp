@@ -1,13 +1,5 @@
-// cmp.cpp - CMP (Chip Multiprocessor / multinucleo real): un hilo por nucleo
-// fisico, cada uno con sus propias unidades de ejecucion, sin compartir nada
-// entre si salvo la lectura de la escena. A diferencia de coarseGrained (que
-// deja al SO decidir donde corre cada hilo), aca se intenta fijar cada hilo
-// a un nucleo fisico distinto (afinidad), para que la comparacion contra SMT
-// (mismo nucleo, hilos logicos compartiendo recursos) sea real.
+// cmp.cpp - CMP: un hilo por nucleo fisico, con afinidad (solo Linux).
 // Uso: cmp <width> <height> <spheres> <depth> <threads> [salida.bmp]
-// threads no deberia superar la cantidad de nucleos fisicos reales de la
-// maquina (en Linux: nproc; en macOS: sysctl -n hw.physicalcpu), sino se
-// sobre-suscribe y deja de representar "un hilo por nucleo".
 #include <cstdio>
 #include <cstdlib>
 #include <thread>
@@ -22,10 +14,7 @@
 #include "render.h"
 #include "scene.h"
 
-// Intenta fijar un hilo a un nucleo fisico especifico. Solo tiene efecto en
-// Linux (pthread_setaffinity_np); en otros sistemas (p. ej. macOS) es un
-// no-op y el SO reparte los hilos libremente. La afinidad real se valida en
-// la maquina Linux del proyecto, la misma que se usa para medir SMT.
+// Fija un hilo a un nucleo. No-op fuera de Linux.
 static void pin_to_core(std::thread& th, int core_id) {
 #if defined(__linux__)
     cpu_set_t cpuset;
@@ -58,9 +47,6 @@ int main(int argc, char** argv) {
     Scene scene = build_scene(spheres, 42);
     Image img(width, height);
 
-    // Reparto de filas: cada hilo recibe una franja contigua, igual que en
-    // coarseGrained. Lo que cambia es que cada hilo se fija a un nucleo
-    // fisico distinto en vez de dejarselo al SO.
     int base  = height / threads;
     int extra = height % threads;
 
@@ -76,7 +62,7 @@ int main(int argc, char** argv) {
         pool.emplace_back([&scene, &img, width, y0, y1, depth]() {
             render_region(scene, img, 0, y0, width, y1, depth);
         });
-        pin_to_core(pool.back(), t);  // hilo t -> nucleo fisico t
+        pin_to_core(pool.back(), t);  // hilo t -> nucleo t
     }
 
     for (std::thread& th : pool) th.join();
