@@ -1,0 +1,14 @@
+# Binarios compilados (se generan localmente con gcc, no se versionan)
+nbody
+bench
+benchcmp
+benchsmt
+benchcgmt
+benchfgmt
+test_cmp
+test_cgmt
+test_fgmt
+test_forces
+test_cgmt_asan
+*.o
+*.out
