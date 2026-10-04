@@ -90,6 +90,17 @@ double NBodyTotalMass(const NBodySystem *sys);
 void NBodyTotalMomentum(const NBodySystem *sys, double *px, double *py, double *pz);
 
 /*
+ * Purpose:    Computes the total kinetic and potential energy of the system.
+ * Why:        Kinetic + potential energy must stay constant over time (up to
+ *             numerical error); this is the main correctness check that the
+ *             velocity-Verlet integrator is implemented correctly.
+ * Parameters: sys - initialized system.
+ *             kinetic, potential - output: the two energy components.
+ * Returns:    Nothing (results are written through the output pointers).
+ */
+void NBodyTotalEnergy(const NBodySystem *sys, double *kinetic, double *potential);
+
+/*
  * Purpose:    Computes the gravitational acceleration of the bodies in the range
  *             [first, last) caused by ALL bodies of the system.
  * Why:        This is the O(N^2) core of the simulation. It receives a range so

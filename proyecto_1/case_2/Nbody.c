@@ -1,8 +1,9 @@
 /*
  * NBody.c
  *
- * Implementation of the N-body simulation core (checkpoint A: creation and
- * initialization only). The public interface is declared in NBody.h.
+ * Implementation of the N-body simulation core: system creation,
+ * initialization, the O(N^2) force calculation, and the velocity-Verlet
+ * integrator (kick/drift/step). The public interface is declared in NBody.h.
  */
 
 #include <stdlib.h>
@@ -143,6 +144,39 @@ void NBodyTotalMomentum(const NBodySystem *sys, double *px, double *py, double *
     *px = sumX;
     *py = sumY;
     *pz = sumZ;
+}
+
+void NBodyTotalEnergy(const NBodySystem *sys, double *kinetic, double *potential)
+{
+    double totalKinetic = 0.0;
+
+    for (int i = 0; i < sys->Count; i++)
+    {
+        double speedSquared = sys->VelX[i] * sys->VelX[i]
+                             + sys->VelY[i] * sys->VelY[i]
+                             + sys->VelZ[i] * sys->VelZ[i];
+        totalKinetic += 0.5 * sys->Mass[i] * speedSquared;
+    }
+
+    double totalPotential = 0.0;
+
+    for (int i = 0; i < sys->Count; i++)
+    {
+        for (int j = i + 1; j < sys->Count; j++)
+        {
+            double dx = sys->PosX[j] - sys->PosX[i];
+            double dy = sys->PosY[j] - sys->PosY[i];
+            double dz = sys->PosZ[j] - sys->PosZ[i];
+
+            double distSquared = dx * dx + dy * dy + dz * dz + SOFTENING_SQUARED;
+            double invDist = 1.0 / sqrt(distSquared);
+
+            totalPotential += -GRAVITATIONAL_CONSTANT * sys->Mass[i] * sys->Mass[j] * invDist;
+        }
+    }
+
+    *kinetic = totalKinetic;
+    *potential = totalPotential;
 }
 
 void NBodyInit(NBodySystem *sys, uint64_t seed)
