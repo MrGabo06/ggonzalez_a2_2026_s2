@@ -1,5 +1,16 @@
 // smt.cpp - SMT: hilos fijados a IDs de CPU logica especificos (hermanos de un
 // mismo nucleo fisico). Solo Linux. Verificar los IDs hermanos con "lscpu -e".
+// ---------------------------------------------------------------------------
+// Enunciado (CE4302, Proyecto 1, seccion 4, inciso c): SMT debe aproximarse
+// mediante ejecucion concurrente con SOBRE-SUSCRIPCION de hilos respecto a
+// los nucleos fisicos (o simulando unidades funcionales compartidas). Aqui
+// se aproxima asi: se fijan 2+ hilos reales del SO a IDs de CPU logica que
+// son hermanos (comparten un mismo nucleo fisico -> sus unidades de
+// ejecucion y cache), es decir, mas hilos activos que nucleos fisicos
+// disponibles para atenderlos. El enunciado tambien pide, por separado,
+// repetir las mediciones con SMT deshabilitado por BIOS/UEFI y comparar
+// contra SMT habilitado para aislar su efecto real en hardware (eso se hace
+// a nivel de sistema, no de codigo: este binario es el mismo en ambos casos).
 // Uso: smt <width> <height> <spheres> <depth> <core_ids_csv> [salida.bmp]
 // Ejemplo: core_ids_csv="0,4" -> 2 hilos, uno en cpu logica 0 y otro en la 4.
 #include <cstdio>
