@@ -30,7 +30,7 @@ BINARIES   := $(patsubst $(ENGINES_DIR)/%.cpp,$(BUILD)/%,$(ENGINE_SRC))
 # Targets
 # =================================================
 
-.PHONY: all help build clean bench bench-oficial
+.PHONY: all help build clean bench bench-oficial analyze
 
 # Sin esto, make trata build/*.o como archivos "intermedios" y los borra
 # apenas termina de enlazar. .SECONDARY los conserva para no recompilar
@@ -59,6 +59,12 @@ bench: $(BENCH_BINARIES) ## Corre scripts/bench.py (prueba corta, 5 corridas). N
 
 bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> results/bench_oficial.csv
 	python3 scripts/bench.py --runs 200 --out results/bench_oficial.csv
+
+# CSV por defecto para `make analyze`; cambialo con: make analyze CSV=otro.csv
+CSV ?= results/bench_oficial.csv
+
+analyze: ## Corre scripts/analyze.py sobre un CSV (uso: make analyze CSV=results/bench_oficial.csv)
+	python3 scripts/analyze.py $(CSV)
 
 
 # =================================================
