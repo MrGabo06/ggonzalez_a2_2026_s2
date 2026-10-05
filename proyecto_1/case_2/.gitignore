@@ -16,3 +16,4 @@ test_cgmt_asan
 # Datos generados por las campañas de medición (regenerables, no se versionan)
 campaign_*.csv
 final_*.csv
+*.log
