@@ -210,7 +210,9 @@ def main():
         labels.append(engine if engine == "sequential" else f"{engine}\nn={threads}")
         data.append(values)
     fig, ax = plt.subplots(figsize=(max(8, len(labels) * 0.9), 5))
-    ax.boxplot(data, labels=labels, showfliers=False)
+    ax.boxplot(data, showfliers=False)  # labels por separado: boxplot() cambio el nombre del parametro entre versiones de matplotlib
+    ax.set_xticks(range(1, len(labels) + 1))
+    ax.set_xticklabels(labels)
     ax.set_ylabel("tiempo (s)")
     ax.set_title("Distribucion de tiempos por configuracion")
     plt.xticks(rotation=45, ha="right")
