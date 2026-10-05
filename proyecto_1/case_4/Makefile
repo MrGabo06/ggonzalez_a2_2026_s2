@@ -30,7 +30,7 @@ BINARIES   := $(patsubst $(ENGINES_DIR)/%.cpp,$(BUILD)/%,$(ENGINE_SRC))
 # Targets
 # =================================================
 
-.PHONY: all help build clean
+.PHONY: all help build clean bench bench-oficial
 
 # Sin esto, make trata build/*.o como archivos "intermedios" y los borra
 # apenas termina de enlazar. .SECONDARY los conserva para no recompilar
@@ -48,6 +48,17 @@ build: $(BINARIES) ## Compile every engine found in engines/
 
 clean: ## Remove build artifacts and results
 	@rm -rf $(BUILD) $(RESULTS)
+
+# bench no depende de `build` (que incluye smt) porque smt solo compila en
+# Linux con afinidad real; bench.py no lo usa, asi que solo pedimos los 4
+# binarios que si corren en cualquier plataforma (incluye macOS).
+BENCH_BINARIES := $(BUILD)/sequential $(BUILD)/coarseGrained $(BUILD)/fineGrained $(BUILD)/cmp
+
+bench: $(BENCH_BINARIES) ## Corre scripts/bench.py (prueba corta, 5 corridas). No incluye smt.
+	python3 scripts/bench.py
+
+bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> results/bench_oficial.csv
+	python3 scripts/bench.py --runs 200 --out results/bench_oficial.csv
 
 
 # =================================================
