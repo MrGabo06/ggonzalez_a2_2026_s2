@@ -1,7 +1,5 @@
 // smt.cpp - SMT: hilos fijados a IDs de CPU logica especificos (hermanos de un
-// mismo nucleo fisico). Solo Linux. Verificar los IDs hermanos con "lscpu -e".
-// Uso: smt <width> <height> <spheres> <depth> <core_ids_csv> [salida.bmp]
-// Ejemplo: core_ids_csv="0,4" -> 2 hilos, uno en cpu logica 0 y otro en la 4.
+// mismo nucleo fisico). 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

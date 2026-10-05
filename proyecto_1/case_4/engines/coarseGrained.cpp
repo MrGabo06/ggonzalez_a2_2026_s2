@@ -1,6 +1,4 @@
 // coarseGrained.cpp - Multihilo de grano grueso (std::thread).
-// Cada hilo pinta su franja completa de filas, de principio a fin y sin
-// interrupcion. El unico punto de sincronizacion es la barrera del final
 // (join): se espera a que todos terminen el cuadro.
 // Uso: coarseGrained <width> <height> <spheres> <depth> <threads> [salida.bmp]
 #include <cstdio>

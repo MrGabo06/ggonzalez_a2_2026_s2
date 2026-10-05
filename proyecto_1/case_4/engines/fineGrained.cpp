@@ -1,10 +1,6 @@
-// fineGrained.cpp - grano fino: planificacion cooperativa por cuantum fijo.
-// Un (1) solo hilo real simula `threads` hilos virtuales: les reparte las
+// Un solo hilo real simula `threads` hilos virtuales: les reparte las
 // mismas franjas de filas que coarseGrained/cmp/smt, pero se turna entre
-// ellos en ronda fija, pintando `quantum` pixeles (minimo = 1) por turno,
-// sin importar si el hilo activo se habria bloqueado. Asi lo pide el
-// enunciado para grano fino. No hay paralelismo real: `threads` aqui es
-// cantidad de hilos virtuales, no hilos del sistema operativo.
+// ellos en ronda fija, pintando `quantum` pixeles (minimo = 1) por turno
 // Uso: fineGrained <width> <height> <spheres> <depth> <threads> [salida.bmp]
 #include <cstdio>
 #include <cstdlib>
