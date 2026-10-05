@@ -1,14 +1,4 @@
 // cmp.cpp - CMP: un hilo por nucleo fisico, con afinidad (solo Linux).
-// ---------------------------------------------------------------------------
-// Enunciado (CE4302, Proyecto 1, seccion 4, inciso d): CMP se implementa de
-// forma DIRECTA, con paralelismo real sobre multiples nucleos, usando hilos
-// (o procesos) del sistema operativo. Eso es exactamente esto: std::thread
-// real del SO, uno por nucleo fisico distinto (afinidad explicita), todos
-// corriendo de verdad al mismo tiempo. A diferencia de fineGrained (un solo
-// hilo real simulando turnos) y de smt (sobre-suscripcion a proposito en un
-// mismo nucleo), aqui threads <= nucleos fisicos usados y cada uno tiene su
-// propio nucleo dedicado: es el caso "feliz" de paralelismo real sin
-// contencion de nucleo.
 // Uso: cmp <width> <height> <spheres> <depth> <threads> [salida.bmp]
 #include <cstdio>
 #include <cstdlib>
