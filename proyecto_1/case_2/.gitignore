@@ -12,3 +12,7 @@ test_forces
 test_cgmt_asan
 *.o
 *.out
+
+# Datos generados por las campañas de medición (regenerables, no se versionan)
+campaign_*.csv
+final_*.csv

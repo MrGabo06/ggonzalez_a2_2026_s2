@@ -16,19 +16,21 @@ declare -A STEPS_FOR_N=(
     [4096]=15
     [8192]=4
 )
-REPETITIONS=20
-OUTPUT_CSV="campaign_cgmt.csv"
+REPETITIONS=200
+OUTPUT_CSV="final_cgmt.csv"
 
+# Chunk size fixed at 8: the pilot (campaign_cgmt.csv) showed it as the best
+# performing value among {1, 8, 32, 128} (lowest avg ns_per_interaction),
+# and this keeps the main campaign's grid the same shape as CMP/SMT (N x
+# threads only). Chunk sensitivity itself is a separate, smaller study.
 N_VALUES=(1024 2048 4096 8192)
 THREAD_COUNTS=(1 2 4 8 16)
-CHUNK_SIZES=(1 8 32 128)
+CHUNK_SIZE=8
 
 CONFIGS=()
 for n in "${N_VALUES[@]}"; do
     for threads in "${THREAD_COUNTS[@]}"; do
-        for chunk in "${CHUNK_SIZES[@]}"; do
-            CONFIGS+=("$n,$threads,$chunk")
-        done
+        CONFIGS+=("$n,$threads,$CHUNK_SIZE")
     done
 done
 

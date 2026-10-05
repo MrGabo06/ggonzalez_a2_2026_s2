@@ -21,19 +21,22 @@ declare -A STEPS_FOR_N=(
     [4096]=15
     [8192]=4
 )
-REPETITIONS=3
-OUTPUT_CSV="campaign_fgmt.csv"
+REPETITIONS=200
+OUTPUT_CSV="final_fgmt.csv"
 
+# Quantum fixed at 64: the pilot (campaign_fgmt.csv) showed it as the best
+# performing value among {8, 64} (lowest avg ns_per_interaction, less
+# swapcontext overhead), and this keeps the main campaign's grid the same
+# shape as CMP/SMT (N x fibers only). Quantum sensitivity itself is a
+# separate, smaller study.
 N_VALUES=(1024 2048 4096 8192)
 FIBER_COUNTS=(1 2 4 8 16)
-QUANTUMS=(8 64)
+QUANTUM=64
 
 CONFIGS=()
 for n in "${N_VALUES[@]}"; do
     for fibers in "${FIBER_COUNTS[@]}"; do
-        for quantum in "${QUANTUMS[@]}"; do
-            CONFIGS+=("$n,$fibers,$quantum")
-        done
+        CONFIGS+=("$n,$fibers,$QUANTUM")
     done
 done
 

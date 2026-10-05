@@ -15,8 +15,8 @@ declare -A STEPS_FOR_N=(
     [4096]=15
     [8192]=4
 )
-REPETITIONS=20
-OUTPUT_CSV="campaign_cmp.csv"
+REPETITIONS=200
+OUTPUT_CSV="final_cmp.csv"
 
 N_VALUES=(1024 2048 4096 8192)
 THREAD_COUNTS=(1 2 4 8 16)
