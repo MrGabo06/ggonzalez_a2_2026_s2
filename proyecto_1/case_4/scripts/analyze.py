@@ -165,6 +165,9 @@ def main():
     print("\n=== Ley de Amdahl: fs ajustado por minimos cuadrados a los datos medidos ===")
     amdahl_rows = []
     for engine, pairs in speedups_by_engine.items():
+        if len(pairs) < 2:  # ej. smt/smt_ctrl (un solo n): con 1 punto el ajuste de fs no significa nada
+            print(f"  {engine}: un solo valor de hilos -> sin ajuste de Amdahl")
+            continue
         fs = fit_fs(pairs)
         if fs is None:
             continue
@@ -231,7 +234,7 @@ def main():
             xs = [p[0] for p in pairs_sorted]
             ys = [p[1] for p in pairs_sorted]
             ax.plot(xs, ys, marker="o", label=f"{engine} (medido)")
-            fs = fit_fs(pairs)
+            fs = fit_fs(pairs) if len(pairs) >= 2 else None
             if fs is not None:
                 ax.plot(xs, [amdahl_speedup(fs, n) for n in xs], linestyle="--",
                         label=f"{engine} (Amdahl ideal, fs={fs:.2f})")

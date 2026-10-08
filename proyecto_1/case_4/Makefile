@@ -30,7 +30,7 @@ BINARIES   := $(patsubst $(ENGINES_DIR)/%.cpp,$(BUILD)/%,$(ENGINE_SRC))
 # Targets
 # =================================================
 
-.PHONY: all help build clean bench bench-oficial analyze run
+.PHONY: all help build clean bench bench-oficial analyze run perf
 
 # Sin esto, make trata build/*.o como archivos "intermedios" y los borra
 # apenas termina de enlazar. .SECONDARY los conserva para no recompilar
@@ -49,12 +49,17 @@ build: $(BINARIES) ## Compile every engine found in engines/
 clean: ## Remove build artifacts and results
 	@rm -rf $(BUILD) $(RESULTS)
 
-# bench no depende de `build` (que incluye smt) porque smt solo compila en
-# Linux con afinidad real; bench.py no lo usa, asi que solo pedimos los 4
-# binarios que si corren en cualquier plataforma (incluye macOS).
+# bench/perf no dependen de `build` (que siempre incluye smt) porque smt solo
+# compila en Linux (afinidad de CPU). Se piden los 4 binarios portables y,
+# solo en Linux, tambien smt (mas abajo); en macOS bench.py omite smt.
 BENCH_BINARIES := $(BUILD)/sequential $(BUILD)/coarseGrained $(BUILD)/fineGrained $(BUILD)/cmp
 
-bench: $(BENCH_BINARIES) ## Corre scripts/bench.py (prueba corta, 5 corridas). No incluye smt.
+# smt usa afinidad de CPU (pthread_setaffinity_np): solo compila en Linux.
+ifeq ($(shell uname -s),Linux)
+BENCH_BINARIES += $(BUILD)/smt
+endif
+
+bench: $(BENCH_BINARIES) ## Corre scripts/bench.py (prueba corta, 5 corridas). Incluye smt en Linux con SMT.
 	python3 scripts/bench.py
 
 bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> results/bench_oficial.csv
@@ -62,6 +67,9 @@ bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> r
 
 # CSV por defecto para `make analyze`; cambialo con: make analyze CSV=otro.csv
 CSV ?= results/bench_oficial.csv
+
+perf: $(BENCH_BINARIES) ## Captura contadores de hardware con perf (Linux fisico) -> results/perf/*.txt
+	@bash scripts/perf_capture.sh
 
 analyze: ## Corre scripts/analyze.py sobre un CSV (uso: make analyze CSV=results/bench_oficial.csv)
 	python3 scripts/analyze.py $(CSV)
