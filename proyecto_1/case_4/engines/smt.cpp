@@ -16,16 +16,15 @@
 // necesita viaja empaquetado en esta estructura (una por hilo).
 struct WorkerArgs {
     const Scene* scene;  // solo lectura, compartida por todos los hilos
-    Image*       img;    // compartida; cada hilo escribe solo sus filas
-    int          width;
-    int          y0, y1; // franja de filas [y0, y1) de este hilo
+    Image*       img;    // compartida; cada hilo escribe solo sus bloques de filas
+    int          t, n;   // este hilo es el `t` de `n` (define sus bloques de filas)
     int          depth;
 };
 
 // Funcion que ejecuta cada hilo. La firma void*(void*) la exige pthreads.
 static void* worker(void* p) {
     const WorkerArgs* a = static_cast<const WorkerArgs*>(p);
-    render_region(*a->scene, *a->img, 0, a->y0, a->width, a->y1, a->depth);
+    render_blocks(*a->scene, *a->img, a->t, a->n, a->depth);  // reparto ciclico de filas
     return nullptr;
 }
 
@@ -71,19 +70,13 @@ int main(int argc, char** argv) {
     Scene scene = build_scene(spheres, 42);
     Image img(width, height);
 
-    int base  = height / threads;
-    int extra = height % threads;
-
     // Argumentos listos antes de medir; el vector no cambia de tamano porque
-    // cada hilo guarda un puntero a su elemento.
+    // cada hilo guarda un puntero a su elemento. Las filas se reparten en
+    // bloques ciclicos dentro de render_blocks (ver render.h).
     std::vector<WorkerArgs> args(threads);
     std::vector<pthread_t>  ids(threads);
-    int y = 0;
     for (int t = 0; t < threads; ++t) {
-        int y0 = y;
-        int y1 = y + base + (t < extra ? 1 : 0);
-        y = y1;
-        args[t] = WorkerArgs{&scene, &img, width, y0, y1, depth};
+        args[t] = WorkerArgs{&scene, &img, t, threads, depth};
     }
 
     double t0 = now_seconds();

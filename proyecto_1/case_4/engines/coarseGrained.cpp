@@ -17,17 +17,34 @@
 // necesita viaja empaquetado en esta estructura (una por hilo).
 struct WorkerArgs {
     const Scene* scene;  // solo lectura, compartida por todos los hilos
-    Image*       img;    // compartida; cada hilo escribe solo sus filas
-    int          width;
-    int          y0, y1; // franja de filas [y0, y1) de este hilo
+    Image*       img;    // compartida; cada hilo escribe solo sus bloques de filas
+    int          t, n;   // este hilo es el `t` de `n` (define sus bloques de filas)
     int          depth;
 };
 
 // Funcion que ejecuta cada hilo. La firma void*(void*) la exige pthreads.
 static void* worker(void* p) {
     const WorkerArgs* a = static_cast<const WorkerArgs*>(p);
-    render_region(*a->scene, *a->img, 0, a->y0, a->width, a->y1, a->depth);
+    render_blocks(*a->scene, *a->img, a->t, a->n, a->depth);  // reparto ciclico de filas
     return nullptr;
+}
+
+// Grano grueso: todos los hilos comparten UN solo nucleo (una sola CPU logica)
+// y el SO los turna ahi, en vez de repartirlos entre varios nucleos (eso seria CMP).
+static const int COARSE_CPU = 0;
+
+// Deja en `attr` la afinidad a COARSE_CPU. Al ir en los atributos, el hilo
+// nace ya fijado (no hay un instante inicial en que corra en otra CPU).
+// No-op fuera de Linux (ahi los hilos quedan libres).
+static void set_single_cpu_attr(pthread_attr_t* attr) {
+#if defined(__linux__)
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(COARSE_CPU, &cpuset);
+    pthread_attr_setaffinity_np(attr, sizeof(cpu_set_t), &cpuset);
+#else
+    (void)attr;
+#endif
 }
 
 int main(int argc, char** argv) {
@@ -50,22 +67,14 @@ int main(int argc, char** argv) {
     Scene scene = build_scene(spheres, 42);
     Image img(width, height);
 
-    // Reparto de filas: cada hilo recibe una franja contigua. Si las filas no
-    // se dividen exacto, los primeros `extra` hilos reciben una fila mas.
-    int base  = height / threads;
-    int extra = height % threads;
-
     // Los argumentos se preparan ANTES de medir y el vector se dimensiona de
     // una vez: cada hilo guarda un puntero a su elemento, que no puede moverse
-    // de lugar mientras el hilo corre.
+    // de lugar mientras el hilo corre. Las filas se reparten en bloques
+    // ciclicos dentro de render_blocks (ver render.h).
     std::vector<WorkerArgs> args(threads);
     std::vector<pthread_t>  ids(threads);
-    int y = 0;
     for (int t = 0; t < threads; ++t) {
-        int y0 = y;
-        int y1 = y + base + (t < extra ? 1 : 0);
-        y = y1;
-        args[t] = WorkerArgs{&scene, &img, width, y0, y1, depth};
+        args[t] = WorkerArgs{&scene, &img, t, threads, depth};
     }
 
     // Se mide desde antes de crear los hilos hasta despues de la barrera.
@@ -75,7 +84,11 @@ int main(int argc, char** argv) {
     // hilo toca, por eso no hace falta ningun candado.
     int created = 0;
     for (int t = 0; t < threads; ++t) {
-        int rc = pthread_create(&ids[t], nullptr, worker, &args[t]);
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        set_single_cpu_attr(&attr);  // todos los hilos -> la misma CPU
+        int rc = pthread_create(&ids[t], &attr, worker, &args[t]);
+        pthread_attr_destroy(&attr);
         if (rc != 0) {  // pthreads devuelve el codigo de error (no usa errno)
             std::fprintf(stderr, "pthread_create fallo (hilo %d): %s\n", t, std::strerror(rc));
             break;

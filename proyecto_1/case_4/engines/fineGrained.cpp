@@ -1,7 +1,9 @@
-// Un solo hilo real simula `threads` hilos virtuales: les reparte las
-// mismas franjas de filas que coarseGrained/cmp/smt, pero se turna entre
-// ellos en ronda fija, pintando `quantum` pixeles (minimo = 1) por turno
+// Un solo hilo real simula `threads` hilos virtuales: les reparte los
+// mismos bloques de filas que coarseGrained/cmp/smt (ver render_blocks en
+// render.h), pero se turna entre ellos en ronda fija, pintando `quantum`
+// pixeles (minimo = 1) por turno
 // Uso: fineGrained <width> <height> <spheres> <depth> <threads> [salida.bmp]
+#include <algorithm>  // std::min
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
@@ -21,11 +23,13 @@ static int quantum_from_env() {
     return (q >= 1) ? q : 1;
 }
 
-// Estado de un hilo virtual: su franja [y0,y1) y el siguiente pixel a pintar.
+// Estado de un hilo virtual: el bloque de filas en que va (el hilo t pinta los
+// bloques t, t+n, t+2n, ..., igual que render_blocks) y el siguiente pixel.
 struct VThread {
-    int y0, y1;
-    int row, col;
-    bool done() const { return row >= y1; }
+    int block;     // bloque de filas actual
+    int row, col;  // siguiente pixel a pintar
+    // Termino cuando su bloque ya no existe (paso del ultimo bloque de la imagen).
+    bool done(int nblocks) const { return block >= nblocks; }
 };
 
 int main(int argc, char** argv) {
@@ -50,18 +54,12 @@ int main(int argc, char** argv) {
     Scene scene = build_scene(spheres, 42);
     Image img(width, height);
 
-    // Reparto en franjas contiguas, igual que coarseGrained/cmp/smt.
+    // Reparto en bloques ciclicos de ROW_BLOCK filas, igual que coarseGrained/cmp/smt:
+    // el hilo virtual t arranca en el bloque t.
+    const int nblocks = (height + ROW_BLOCK - 1) / ROW_BLOCK;
     std::vector<VThread> vthreads(threads);
-    {
-        int base  = height / threads;
-        int extra = height % threads;
-        int y = 0;
-        for (int t = 0; t < threads; ++t) {
-            int y0 = y;
-            int y1 = y + base + (t < extra ? 1 : 0);
-            y = y1;
-            vthreads[t] = VThread{y0, y1, y0, 0};
-        }
+    for (int t = 0; t < threads; ++t) {
+        vthreads[t] = VThread{t, t * ROW_BLOCK, 0};
     }
 
     double t0 = now_seconds();
@@ -74,12 +72,20 @@ int main(int argc, char** argv) {
         for (int t = 0; t < threads; ++t) {
             if (finished[t]) continue;
             VThread& vt = vthreads[t];
-            for (int k = 0; k < quantum && !vt.done(); ++k) {
+            for (int k = 0; k < quantum && !vt.done(nblocks); ++k) {
                 img.set_pixel(vt.col, vt.row,
                               render_pixel(scene, vt.col, vt.row, width, height, depth));
-                if (++vt.col >= width) { vt.col = 0; ++vt.row; }
+                if (++vt.col >= width) {
+                    vt.col = 0;
+                    ++vt.row;
+                    // Fin del bloque (o de la imagen): salta al siguiente bloque de este hilo.
+                    if (vt.row >= std::min((vt.block + 1) * ROW_BLOCK, height)) {
+                        vt.block += threads;
+                        vt.row = vt.block * ROW_BLOCK;
+                    }
+                }
             }
-            if (vt.done()) { finished[t] = 1; --remaining; }
+            if (vt.done(nblocks)) { finished[t] = 1; --remaining; }
         }
     }
 

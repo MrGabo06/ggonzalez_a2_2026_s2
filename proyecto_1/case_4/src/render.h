@@ -11,4 +11,16 @@
 void render_region(const Scene& scene, Image& img,
                    int x0, int y0, int x1, int y1, int max_depth);
 
+// Filas por bloque en el reparto ciclico entre hilos (ver render_blocks).
+const int ROW_BLOCK = 8;
+
+// Pinta los bloques de filas que le tocan al hilo `t` de `n` hilos: el bloque b
+// (filas [b*ROW_BLOCK, (b+1)*ROW_BLOCK)) lo pinta el hilo b % n. Los costos por
+// fila no son parejos (el cielo es barato, el piso con reflexiones cuesta ~3
+// veces mas); con franjas contiguas los hilos con filas baratas terminaban antes
+// y esperaban. Al intercalar bloques, cada hilo recibe una mezcla de filas
+// baratas y caras y todos terminan casi a la vez. Es el mismo reparto para todos
+// los motores, asi la comparacion entre modelos es justa.
+void render_blocks(const Scene& scene, Image& img, int t, int n, int max_depth);
+
 #endif  // RENDER_H
