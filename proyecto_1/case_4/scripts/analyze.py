@@ -228,20 +228,32 @@ def main():
     # 2) speedup medido vs amdahl ideal vs lineal, por motor
     if speedups_by_engine:
         all_threads = sorted({n for pairs in speedups_by_engine.values() for n, _ in pairs})
-        fig, ax = plt.subplots(figsize=(7, 5))
+        fig, ax = plt.subplots(figsize=(8, 5.5))
+        # estilo por motor: cmp grueso y encima, coarse hueco para que se vea aunque se solapen
+        style = {
+            "cmp":          dict(color="tab:red",    marker="o", ms=9, lw=2.8, zorder=5),
+            "coarseGrained": dict(color="tab:blue",  marker="s", ms=11, lw=1.5, ls="--", mfc="none", zorder=4),
+            "fineGrained":  dict(color="tab:green",  marker="^", ms=8, lw=1.5, zorder=3),
+            "smt":          dict(color="tab:orange", marker="D", ms=8, lw=0, zorder=3),
+            "smt_ctrl":     dict(color="tab:purple", marker="P", ms=9, lw=0, zorder=3),
+        }
         for engine, pairs in speedups_by_engine.items():
             pairs_sorted = sorted(pairs)
             xs = [p[0] for p in pairs_sorted]
             ys = [p[1] for p in pairs_sorted]
-            ax.plot(xs, ys, marker="o", label=f"{engine} (medido)")
+            ax.plot(xs, ys, label=f"{engine} (medido)", **style.get(engine, dict(marker="o")))
             fs = fit_fs(pairs) if len(pairs) >= 2 else None
-            if fs is not None:
-                ax.plot(xs, [amdahl_speedup(fs, n) for n in xs], linestyle="--",
-                        label=f"{engine} (Amdahl ideal, fs={fs:.2f})")
-        ax.plot(all_threads, all_threads, linestyle=":", color="gray", label="speedup lineal ideal")
+            if fs is not None and engine in ("cmp", "fineGrained"):
+                ax.plot(xs, [amdahl_speedup(fs, n) for n in xs], linestyle=":", lw=1,
+                        color=style[engine]["color"], alpha=0.6,
+                        label=f"{engine} (Amdahl ajustado, fs={fs:.2f})")
+        ax.plot(all_threads, all_threads, linestyle="-.", color="gray", lw=1, label="speedup lineal ideal")
+        ax.axhline(1.0, color="black", lw=0.6, alpha=0.4)
+        ax.axvline(4, color="gray", lw=0.6, alpha=0.4)
+        ax.text(4.05, 0.97, "4 nucleos fisicos", fontsize=7, color="gray", transform=ax.get_xaxis_transform(), va="top")
         ax.set_xlabel("cantidad de hilos")
         ax.set_ylabel("speedup")
-        ax.set_title("Escalabilidad: speedup medido vs. ideal (Amdahl y lineal)")
+        ax.set_title("Escalabilidad: speedup medido vs. lineal ideal")
         ax.legend(fontsize=8)
         fig.tight_layout()
         scal_path = out_prefix.with_name(out_prefix.name + "_escalabilidad.png")
