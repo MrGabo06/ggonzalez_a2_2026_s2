@@ -1,10 +1,10 @@
-// smt.cpp - SMT: hilos fijados a IDs de CPU logica especificos (hermanos de un
-// mismo nucleo fisico). 
+// smt.cpp - SMT: hilos (pthreads) fijados a IDs de CPU logica especificos
+// (hermanos de un mismo nucleo fisico). Solo compila en Linux (afinidad de CPU).
+// Uso: smt <width> <height> <spheres> <depth> <core_ids_csv> [salida.bmp]
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <pthread.h>
-#include <thread>
 #include <vector>
 
 #include "bench.h"
@@ -12,12 +12,31 @@
 #include "render.h"
 #include "scene.h"
 
-// Fija un hilo a una cpu logica.
-static void pin_to_core(std::thread& th, int core_id) {
+// pthread_create solo acepta UN argumento void*, asi que todo lo que el hilo
+// necesita viaja empaquetado en esta estructura (una por hilo).
+struct WorkerArgs {
+    const Scene* scene;  // solo lectura, compartida por todos los hilos
+    Image*       img;    // compartida; cada hilo escribe solo sus filas
+    int          width;
+    int          y0, y1; // franja de filas [y0, y1) de este hilo
+    int          depth;
+};
+
+// Funcion que ejecuta cada hilo. La firma void*(void*) la exige pthreads.
+static void* worker(void* p) {
+    const WorkerArgs* a = static_cast<const WorkerArgs*>(p);
+    render_region(*a->scene, *a->img, 0, a->y0, a->width, a->y1, a->depth);
+    return nullptr;
+}
+
+// Deja en `attr` la afinidad de un hilo a UNA cpu logica. Al ir en los
+// atributos, el hilo nace YA fijado a esa cpu (no hay un instante inicial en
+// que corra en otra).
+static void set_core_attr(pthread_attr_t* attr, int core_id) {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(core_id, &cpuset);
-    pthread_setaffinity_np(th.native_handle(), sizeof(cpu_set_t), &cpuset);
+    pthread_attr_setaffinity_np(attr, sizeof(cpu_set_t), &cpuset);
 }
 
 // Parsea "0,4,1" -> {0, 4, 1}.
@@ -55,24 +74,40 @@ int main(int argc, char** argv) {
     int base  = height / threads;
     int extra = height % threads;
 
-    double t0 = now_seconds();
-
-    std::vector<std::thread> pool;
-    pool.reserve(threads);
+    // Argumentos listos antes de medir; el vector no cambia de tamano porque
+    // cada hilo guarda un puntero a su elemento.
+    std::vector<WorkerArgs> args(threads);
+    std::vector<pthread_t>  ids(threads);
     int y = 0;
     for (int t = 0; t < threads; ++t) {
         int y0 = y;
         int y1 = y + base + (t < extra ? 1 : 0);
         y = y1;
-        pool.emplace_back([&scene, &img, width, y0, y1, depth]() {
-            render_region(scene, img, 0, y0, width, y1, depth);
-        });
-        pin_to_core(pool.back(), core_ids[t]);
+        args[t] = WorkerArgs{&scene, &img, width, y0, y1, depth};
     }
 
-    for (std::thread& th : pool) th.join();
+    double t0 = now_seconds();
+
+    int created = 0;
+    for (int t = 0; t < threads; ++t) {
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        set_core_attr(&attr, core_ids[t]);  // hilo t -> cpu logica core_ids[t]
+        int rc = pthread_create(&ids[t], &attr, worker, &args[t]);
+        pthread_attr_destroy(&attr);
+        if (rc != 0) {  // pthreads devuelve el codigo de error (no usa errno)
+            std::fprintf(stderr, "pthread_create fallo (hilo %d, cpu %d): %s\n", t, core_ids[t], std::strerror(rc));
+            break;
+        }
+        ++created;
+    }
+
+    // Barrera de fin de cuadro: espera a los hilos que si se crearon.
+    for (int t = 0; t < created; ++t) pthread_join(ids[t], nullptr);
 
     double t1 = now_seconds();
+
+    if (created != threads) return 1;  // faltaron hilos: la imagen esta incompleta
 
     if (out_path) {
         if (!write_bmp(img, out_path)) {

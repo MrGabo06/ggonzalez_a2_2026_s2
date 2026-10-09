@@ -8,7 +8,7 @@
 CXX      := g++
 # -O2: optimizacion moderada (mediciones realistas).
 CXXFLAGS := -O2 -Wall -Wextra -std=c++17 -Isrc
-# -pthread: necesario para enlazar std::thread en Linux.
+# -pthread: necesario para enlazar la libreria de hilos POSIX (pthread_create, etc.).
 LDFLAGS  := -pthread
 
 SRC_DIR     := src
@@ -30,7 +30,7 @@ BINARIES   := $(patsubst $(ENGINES_DIR)/%.cpp,$(BUILD)/%,$(ENGINE_SRC))
 # Targets
 # =================================================
 
-.PHONY: all help build clean bench bench-oficial analyze run perf
+.PHONY: all help build clean distclean clean-images bench bench-oficial analyze run perf
 
 # Sin esto, make trata build/*.o como archivos "intermedios" y los borra
 # apenas termina de enlazar. .SECONDARY los conserva para no recompilar
@@ -46,8 +46,16 @@ help: ## Show available targets
 
 build: $(BINARIES) ## Compile every engine found in engines/
 
-clean: ## Remove build artifacts and results
-	@rm -rf $(BUILD) $(RESULTS)
+clean: ## Remove build artifacts only (results/ se conserva)
+	@rm -rf $(BUILD)
+
+# results/ guarda las 200 corridas oficiales y las capturas de perf, que NO
+# estan en git (results/ esta en .gitignore): borrarlo es irreversible.
+distclean: clean ## Remove build artifacts AND results/ (irreversible)
+	@rm -rf $(RESULTS)
+
+clean-images: ## Borra solo las imagenes de `make run` (results/run_*.bmp); no toca CSVs ni perf
+	@rm -f $(RESULTS)/run_*.bmp
 
 # bench/perf no dependen de `build` (que siempre incluye smt) porque smt solo
 # compila en Linux (afinidad de CPU). Se piden los 4 binarios portables y,
