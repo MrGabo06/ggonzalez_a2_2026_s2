@@ -153,6 +153,13 @@ def main():
 
     out_prefix = Path(args.out).resolve() if args.out else csv_path.parent / csv_path.stem
     out_prefix.parent.mkdir(parents=True, exist_ok=True)
+    # Si el CSV vive en results/ht_<modo>/benchmark/, el ajuste de Amdahl va a la carpeta
+    # hermana results/ht_<modo>/amdahl/; todo lo demas queda junto al CSV.
+    amdahl_prefix = out_prefix
+    if csv_path.parent.name == "benchmark" and not args.out:
+        amdahl_dir = csv_path.parent.parent / "amdahl"
+        amdahl_dir.mkdir(parents=True, exist_ok=True)
+        amdahl_prefix = amdahl_dir / csv_path.stem
 
     seq_values = groups.get(("sequential", 1))
     if not seq_values:
@@ -218,7 +225,7 @@ def main():
             print(f"    threads={n:<2} [{region}] medido={measured:.3f}  amdahl_ajustado={predicted:.3f}{note}")
 
     if amdahl_rows:
-        amdahl_csv = out_prefix.with_name(out_prefix.name + "_amdahl.csv")
+        amdahl_csv = amdahl_prefix.with_name(amdahl_prefix.name + "_amdahl.csv")
         with amdahl_csv.open("w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=list(amdahl_rows[0].keys()))
             writer.writeheader()
@@ -360,7 +367,9 @@ def main():
                     fontsize=9, color=MUTED)
 
         if cores:
-            ax.text(cores + 0.1, y_top - 0.08,
+            # texto de la zona SMT: debajo de la curva de cmp y encima de coarse/fine,
+            # lejos de la recta ideal y de la etiqueta de Amdahl
+            ax.text(cores + 0.1, 2.75,
                     f"mas hilos que nucleos fisicos ({cores}): SMT\n(fuera del ajuste de Amdahl)",
                     fontsize=9, color=MUTED, va="top", ha="left", zorder=3)
             ax.text(cores - 0.1, y_top - 0.08, f"{cores} nucleos fisicos", fontsize=9, color=MUTED,
@@ -399,6 +408,87 @@ def main():
         fig.savefig(scal_path, dpi=170, facecolor="white", bbox_inches="tight")
         plt.close(fig)
         print(f"grafica de escalabilidad guardada en {scal_path}")
+
+        # --- una grafica por motor: mas legible que juntar todos en una sola ----------
+        # Misma escala vertical en coarse/fine/cmp para poder compararlas entre si.
+        ci_by_cfg = {(r["engine"], r["threads"]): (r["speedup_ci95_low"], r["speedup_ci95_high"])
+                     for r in metrics_rows}
+
+        def plot_engine(engine, with_ctrl=False):
+            members = [m for m in ([engine] + (["smt_ctrl"] if with_ctrl else [])) if m in speedups_by_engine]
+            if engine not in members:
+                return
+            ns = sorted({n for m in members for n, _ in speedups_by_engine[m]})
+            single = len(ns) == 1  # smt/smt_ctrl: un solo n, no hay curva que dibujar
+            x_max = ns[0] + 1 if single else max(ns)
+            y_top_e = 2.7 if max(ns) <= 2 else 5.5
+            fig, ax = plt.subplots(figsize=(8, 5.4))
+            fig.patch.set_facecolor("white")
+            if cores and max(ns) > cores:
+                ax.axvspan(cores + 0.001, x_max + 0.6, color="#efeeea", zorder=0)
+                ax.axvline(cores, color="#bdbcb6", lw=1, zorder=1)
+                ax.text(cores + 0.1, y_top_e - 0.08, f"mas hilos que nucleos fisicos ({cores}): SMT",
+                        fontsize=9, color=MUTED, va="top", ha="left")
+            ax.axhline(1.0, color="#9a9893", lw=0.8, zorder=1)
+            ax.plot([0.5, x_max + 0.6], [0.5, x_max + 0.6], linestyle="-.", color="#9a9893", lw=1.3, zorder=2)
+            for m in members:
+                st = dict(style[m]); st.pop("label", None)
+                pairs_m = sorted(speedups_by_engine[m])
+                xs = [p[0] + (dx.get(m, 0.0) if single else 0.0) for p in pairs_m]
+                ys = [p[1] for p in pairs_m]
+                lo = [max(0.0, y - ci_by_cfg[(m, p[0])][0]) for p, y in zip(pairs_m, ys)]
+                hi = [max(0.0, ci_by_cfg[(m, p[0])][1] - y) for p, y in zip(pairs_m, ys)]
+                joined = st.get("lw", 0) > 0
+                ax.errorbar(xs, ys, yerr=[lo, hi], color=st["color"], marker=st["marker"], ms=st["ms"],
+                            lw=st.get("lw", 0) if joined else 0, ls=st.get("ls", "-") if joined else "none",
+                            mfc=st.get("mfc", st["color"]), mew=st.get("mew", 1.0),
+                            capsize=4, elinewidth=1.4, zorder=st.get("zorder", 3))
+                for x, y in zip(xs, ys):
+                    txt = f"{m} {y:.2f}x" if single else f"{y:.2f}x"
+                    ax.annotate(txt, (x, y), xytext=((10, 9) if m != "smt_ctrl" else (-10, 9)) if single else (8, -22),
+                                textcoords="offset points", ha="right" if (single and m == "smt_ctrl") else "left",
+                                fontsize=10, color=INK, zorder=7)
+                used = fit_points(speedups_by_engine[m], cores)
+                fs = fit_fs(used) if len(used) >= 2 else None
+                if fs is not None and fs > 0.05:
+                    ax.plot(ns, [amdahl_speedup(fs, n) for n in ns], linestyle=":", lw=1.9,
+                            color=st["color"], alpha=0.85, zorder=4)
+            ax.set_xlim(0.5, x_max + 0.6)
+            ax.set_ylim(0, y_top_e)
+            ax.set_xticks(list(range(1, x_max + 1)) if single else ns)
+            ax.set_xlabel("cantidad de hilos", fontsize=11, color=INK)
+            ax.set_ylabel("speedup (t secuencial / t del motor)", fontsize=11, color=INK)
+            title = (f"{engine} contra su control ({'smt_ctrl'})" if with_ctrl and "smt_ctrl" in members
+                     else f"{engine}: speedup medido")
+            ax.set_title(title, fontsize=13, color=INK, loc="left", pad=12)
+            ax.grid(axis="y", color="#e6e5e0", lw=0.8, zorder=0)
+            ax.set_axisbelow(True)
+            for side in ("top", "right"):
+                ax.spines[side].set_visible(False)
+            for side in ("left", "bottom"):
+                ax.spines[side].set_color("#9a9893")
+            ax.tick_params(colors=MUTED, labelsize=10)
+            handles = []
+            for m in members:
+                st = style[m]
+                handles.append(Line2D([], [], color=st["color"], marker=st["marker"], ms=8,
+                                      lw=(1.6 if st.get("lw", 0) else 0), ls=st.get("ls", "-"),
+                                      mfc=st.get("mfc", st["color"]), mew=st.get("mew", 1.0), label=st["label"]))
+            handles.append(Line2D([], [], color="#9a9893", ls="-.", lw=1.3, label="speedup lineal ideal"))
+            if any((fit_fs(fit_points(speedups_by_engine[m], cores)) or 0) > 0.05
+                   for m in members if len(fit_points(speedups_by_engine[m], cores)) >= 2):
+                handles.append(Line2D([], [], color=style[engine]["color"], ls=":", lw=1.9, label="Amdahl ajustado"))
+            ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.13),
+                      ncol=min(3, len(handles)), fontsize=9.5, frameon=False, labelcolor=INK)
+            fig.tight_layout()
+            p = out_prefix.with_name(out_prefix.name + f"_escalabilidad_{engine}.png")
+            fig.savefig(p, dpi=170, facecolor="white", bbox_inches="tight")
+            plt.close(fig)
+            print(f"grafica de {engine} guardada en {p}")
+
+        for eng in ("coarseGrained", "fineGrained", "cmp"):
+            plot_engine(eng)
+        plot_engine("smt", with_ctrl=True)
 
 
 if __name__ == "__main__":

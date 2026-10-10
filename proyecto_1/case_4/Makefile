@@ -16,6 +16,11 @@ ENGINES_DIR := engines
 BUILD       := build
 RESULTS     := results
 
+# Hyper-Threading (SMT) activo (on) o apagado (off): lo detecta scripts/ht_mode.py y cada modo
+# guarda en su carpeta (results/ht_on, results/ht_off). Se puede forzar: make bench-oficial HT=off
+HT_MODE    := $(shell HT="$(HT)" python3 scripts/ht_mode.py 2>/dev/null || echo on)
+RESULTS_HT := $(RESULTS)/ht_$(HT_MODE)
+
 COMMON_SRC := $(wildcard $(SRC_DIR)/*.cpp)
 COMMON_OBJ := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD)/%.o,$(COMMON_SRC))
 COMMON_HDR := $(wildcard $(SRC_DIR)/*.h)
@@ -30,7 +35,7 @@ BINARIES   := $(patsubst $(ENGINES_DIR)/%.cpp,$(BUILD)/%,$(ENGINE_SRC))
 # Targets
 # =================================================
 
-.PHONY: all help build clean distclean clean-images bench bench-oficial analyze run perf
+.PHONY: all help build clean distclean clean-images ht-mode bench bench-oficial analyze run perf perf-report
 
 # Sin esto, make trata build/*.o como archivos "intermedios" y los borra
 # apenas termina de enlazar. .SECONDARY los conserva para no recompilar
@@ -54,8 +59,11 @@ clean: ## Remove build artifacts only (results/ se conserva)
 distclean: clean ## Remove build artifacts AND results/ (irreversible)
 	@rm -rf $(RESULTS)
 
-clean-images: ## Borra solo las imagenes de `make run` (results/run_*.bmp); no toca CSVs ni perf
-	@rm -f $(RESULTS)/run_*.bmp
+clean-images: ## Borra solo las imagenes de `make run` (results/ht_*/imagenes_raytracing/); no toca CSVs ni perf
+	@rm -f $(RESULTS)/ht_*/imagenes_raytracing/run_*.bmp
+
+ht-mode: ## Muestra si Hyper-Threading esta activo y en que carpeta de results/ se va a guardar
+	@echo "Hyper-Threading: $(HT_MODE) -> resultados en $(RESULTS_HT)/"
 
 # bench/perf no dependen de `build` (que siempre incluye smt) porque smt solo
 # compila en Linux (afinidad de CPU). Se piden los 4 binarios portables y,
@@ -70,16 +78,19 @@ endif
 bench: $(BENCH_BINARIES) ## Corre scripts/bench.py (prueba corta, 5 corridas). Incluye smt en Linux con SMT.
 	python3 scripts/bench.py
 
-bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> results/bench_oficial.csv
-	python3 scripts/bench.py --runs 200 --out results/bench_oficial.csv
+bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> results/ht_<on|off>/benchmark/bench_oficial.csv
+	python3 scripts/bench.py --runs 200 --out bench_oficial.csv
 
 # CSV por defecto para `make analyze`; cambialo con: make analyze CSV=otro.csv
-CSV ?= results/bench_oficial.csv
+CSV ?= $(RESULTS_HT)/benchmark/bench_oficial.csv
 
-perf: $(BENCH_BINARIES) ## Captura contadores de hardware con perf (Linux fisico) -> results/perf/*.txt
+perf: $(BENCH_BINARIES) ## Captura contadores de hardware con perf (Linux fisico) -> results/ht_<on|off>/perfilado/capturas/
 	@bash scripts/perf_capture.sh
 
-analyze: ## Corre scripts/analyze.py sobre un CSV (uso: make analyze CSV=results/bench_oficial.csv)
+perf-report: ## Resume las capturas de perf en tabla y graficas (results/ht_<on|off>/perfilado/)
+	python3 scripts/perf_report.py
+
+analyze: ## Corre scripts/analyze.py sobre el CSV oficial del modo actual (otro: make analyze CSV=ruta.csv)
 	python3 scripts/analyze.py $(CSV)
 
 run: $(BENCH_BINARIES) ## Corre cada motor una vez (control: compara imagenes contra sequential) - ver scripts/run_all.sh

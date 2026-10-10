@@ -6,7 +6,7 @@
 # Cada motor se corre REPS veces seguidas bajo UN solo `perf stat` (una corrida
 # dura ~50 ms, muy poco para contar bien). Con -a -A perf cuenta todo el sistema
 # y separa los contadores POR CPU LOGICA: se ve cuales trabajaron y cuales no.
-# El texto crudo queda en results/perf/<motor>.txt (sirve de captura para el
+# El texto crudo queda en results/ht_<on|off>/perfilado/capturas/<motor>.txt (sirve de captura para el
 # documento); perf calcula solo "insn per cycle" (IPC) si hay cycles+instructions.
 #
 # Uso (Linux fisico, desde proyecto_1/case_4):
@@ -19,7 +19,10 @@ cd "$(dirname "$0")/.."
 WIDTH=800; HEIGHT=600; SPHERES=12; DEPTH=4
 THREADS=${THREADS:-4}
 REPS=${REPS:-20}
-OUTDIR=results/perf
+# Hyper-Threading activo o apagado (scripts/ht_mode.py): las capturas de cada modo van
+# a su propia carpeta, para no mezclarlas.
+HT_MODE=$(python3 scripts/ht_mode.py 2>/dev/null || echo on)
+OUTDIR=results/ht_$HT_MODE/perfilado/capturas
 
 if ! command -v perf >/dev/null 2>&1; then
     echo "perf no esta instalado. En Ubuntu: sudo apt install linux-tools-common linux-tools-\$(uname -r)"
@@ -59,6 +62,7 @@ for ev in $CANDIDATES; do
         EVENTS="$EVENTS,$ev"
     fi
 done
+echo "Hyper-Threading: $HT_MODE -> capturas en $OUTDIR"
 echo "Eventos: $EVENTS"
 echo "Modo:    ${PERF_FLAGS:-solo proceso}   |   REPS=$REPS   THREADS=$THREADS"
 echo
@@ -69,7 +73,7 @@ capture() {   # capture <etiqueta> <comando...>
     local out="$OUTDIR/$label.txt"
     echo "== $label: $cmd  (x$REPS) =="
     {
-        echo "# $label | $(date -Is) | $(uname -r) | modo: ${PERF_FLAGS:-solo proceso}"
+        echo "# $label | $(date -Is) | $(uname -r) | modo: ${PERF_FLAGS:-solo proceso} | HT: $HT_MODE"
         echo "# comando (repetido $REPS veces): $cmd"
         echo "# eventos: $EVENTS"
     } > "$out"

@@ -14,17 +14,29 @@ los IDs de CPU se detectan con scripts/detect_cpus.sh (o se fuerzan con
 --smt-cpus / --smt-ctrl-cpus). Si no hay pareja hermana (SMT apagado), smt se
 omite y se avisa; smt_ctrl se mide igual.
 
+Los resultados se guardan en results/ht_on/benchmark o results/ht_off/benchmark segun
+Hyper-Threading este activo o apagado en esta maquina (se detecta solo; ver ht_mode.py).
+Con HT apagado solo hay tantas CPUs logicas como nucleos fisicos, asi que se omiten las
+cantidades de hilos que no caben (ej. 8 hilos en 4 CPUs).
+
 Uso basico (desde proyecto_1/case_4):
     python3 scripts/bench.py --runs 5
+Las configuraciones se intercalan (una corrida de cada una por ronda, orden aleatorio) para que
+la deriva termica o la carga de fondo no sesgue a una sola; --no-interleave vuelve al modo en bloques.
 Para la corrida oficial (200+ repeticiones):
-    python3 scripts/bench.py --runs 200 --out results/bench_oficial.csv
+    python3 scripts/bench.py --runs 200 --out bench_oficial.csv
 """
 import argparse
 import csv
+import os
+import random
 import statistics
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ht_mode  # noqa: E402  (deteccion de Hyper-Threading y carpetas de results/)
 
 CASE4_DIR = Path(__file__).resolve().parent.parent  # proyecto_1/case_4
 BUILD_DIR = CASE4_DIR / "build"
@@ -98,16 +110,33 @@ def main():
     ap.add_argument("--height", type=int, default=600)
     ap.add_argument("--spheres", type=int, default=12)
     ap.add_argument("--depth", type=int, default=4)
-    ap.add_argument("--out", type=str, default="results/bench.csv", help="ruta del CSV de salida (relativa a proyecto_1/case_4)")
+    ap.add_argument("--out", type=str, default="bench.csv",
+                    help="CSV de salida. Solo el nombre (ej. bench_oficial.csv): va a results/ht_<on|off>/benchmark/. "
+                         "Con una ruta (ej. results/otro/x.csv, relativa a proyecto_1/case_4) se usa tal cual.")
+    ap.add_argument("--no-interleave", action="store_true",
+                    help="correr cada configuracion en bloque (modo viejo). Por defecto se intercalan: en cada ronda "
+                         "se corre una vez cada configuracion, en orden aleatorio")
+    ap.add_argument("--seed", type=int, default=0, help="semilla del orden aleatorio por ronda (default: 0)")
     ap.add_argument("--build", action="store_true", help="correr `make build` antes de medir")
     ap.add_argument("--no-smt", action="store_true", help="no medir smt ni smt_ctrl")
     ap.add_argument("--smt-cpus", type=str, default=None, help="IDs de CPU logica para smt (hermanas), ej. 3,7 (default: autodeteccion)")
     ap.add_argument("--smt-ctrl-cpus", type=str, default=None, help="IDs de CPU logica para smt_ctrl (nucleos distintos), ej. 0,1 (default: autodeteccion)")
     args = ap.parse_args()
 
+    mode, source = ht_mode.detect_mode()
     thread_list = [int(t) for t in args.threads.split(",") if t.strip()]
-    out_path = CASE4_DIR / args.out
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    # cmp fija el hilo t a la CPU t: con mas hilos que CPUs logicas no se puede (con HT apagado hay la mitad).
+    n_cpus = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+    dropped = [t for t in thread_list if t > n_cpus]
+    if dropped:
+        thread_list = [t for t in thread_list if t <= n_cpus]
+        print(f"AVISO: esta maquina tiene {n_cpus} CPUs logicas: se omiten {dropped} hilos (usando {thread_list})", file=sys.stderr)
+    if Path(args.out).parent == Path("."):
+        out_path = ht_mode.subdir("benchmark", mode) / args.out
+    else:
+        out_path = CASE4_DIR / args.out
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Hyper-Threading: {mode} (detectado por {source}) -> resultados en {out_path.parent}", file=sys.stderr)
 
     if args.build:
         print("compilando (make build)...", file=sys.stderr)
@@ -116,33 +145,45 @@ def main():
     common = [str(args.width), str(args.height), str(args.spheres), str(args.depth)]
     smt_plan = plan_smt(args)
 
-    rows = []  # (engine, threads, run, time_sec)
-    total_configs = 1 + len(THREADED_ENGINES) * len(thread_list) + len(smt_plan)
-    print(f"{total_configs} configuraciones x {args.runs} corridas = {total_configs * args.runs} ejecuciones totales", file=sys.stderr)
-
-    # sequential: no varia con threads, se corre aparte y se etiqueta threads=1
-    seq_bin = BUILD_DIR / SEQUENTIAL
-    for run_idx in range(1, args.runs + 1):
-        t = run_once(seq_bin, common)
-        rows.append((SEQUENTIAL, 1, run_idx, t))
-        print(f"  sequential            run {run_idx}/{args.runs}: {t:.6f}s", file=sys.stderr)
-
+    # Lista de configuraciones: (etiqueta de motor, hilos, binario, argumentos, texto para el log)
+    configs = [(SEQUENTIAL, 1, BUILD_DIR / SEQUENTIAL, common, "sequential")]
     for engine in THREADED_ENGINES:
-        binary = BUILD_DIR / engine
         for threads in thread_list:
-            for run_idx in range(1, args.runs + 1):
-                t = run_once(binary, [*common, str(threads)])
-                rows.append((engine, threads, run_idx, t))
-                print(f"  {engine:<20} threads={threads:<2} run {run_idx}/{args.runs}: {t:.6f}s", file=sys.stderr)
-
-    smt_bin = BUILD_DIR / SMT
+            configs.append((engine, threads, BUILD_DIR / engine, [*common, str(threads)],
+                            f"{engine} threads={threads}"))
     for label, cpus in smt_plan:
         n_threads = len(cpus.split(","))
         print(f"{label}: CPUs logicas {cpus} ({n_threads} hilos)", file=sys.stderr)
-        for run_idx in range(1, args.runs + 1):
-            t = run_once(smt_bin, [*common, cpus])
-            rows.append((label, n_threads, run_idx, t))
-            print(f"  {label:<20} cpus={cpus:<5} run {run_idx}/{args.runs}: {t:.6f}s", file=sys.stderr)
+        configs.append((label, n_threads, BUILD_DIR / SMT, [*common, cpus], f"{label} cpus={cpus}"))
+
+    print(f"{len(configs)} configuraciones x {args.runs} corridas = {len(configs) * args.runs} ejecuciones totales", file=sys.stderr)
+
+    rows = []  # (engine, threads, run, time_sec)
+    if args.no_interleave:
+        # Modo viejo: todas las corridas de una configuracion seguidas. Un cambio de temperatura
+        # o de carga de la maquina durante la sesion sesga a una configuracion completa.
+        order = [(ci, r) for ci in range(len(configs)) for r in range(1, args.runs + 1)]
+        print("modo: configuraciones en bloques (--no-interleave)", file=sys.stderr)
+    else:
+        # Modo intercalado: en cada ronda se corre UNA vez cada configuracion, en orden aleatorio.
+        # Asi la deriva termica o la carga de fondo se reparten por igual entre todas.
+        rng = random.Random(args.seed)
+        order = []
+        for r in range(1, args.runs + 1):
+            idx = list(range(len(configs)))
+            rng.shuffle(idx)
+            order.extend((ci, r) for ci in idx)
+        print(f"modo: intercalado, orden aleatorio por ronda (semilla {args.seed})", file=sys.stderr)
+
+    for ci, run_idx in order:
+        engine, threads, binary, bargs, text = configs[ci]
+        t = run_once(binary, bargs)
+        rows.append((ci, engine, threads, run_idx, t))
+        print(f"  {text:<26} run {run_idx}/{args.runs}: {t:.6f}s", file=sys.stderr)
+
+    # El CSV queda ordenado por configuracion y numero de corrida (igual que antes).
+    rows.sort(key=lambda x: (x[0], x[3]))
+    rows = [(e, th, r, t) for _ci, e, th, r, t in rows]
 
     with out_path.open("w", newline="") as f:
         writer = csv.writer(f)
