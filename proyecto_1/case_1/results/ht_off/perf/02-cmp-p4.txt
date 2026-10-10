@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.070617550,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.069520853,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.095910627,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.052583027,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.058534207,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.053326228,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.054944466,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.054872975,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.045521018,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.048445826,334737756981.249573
+
+ Performance counter stats for 'build/cmp 512 64 4 42' (10 runs):
+
+            147,31 msec task-clock                       #    1,880 CPUs utilized               ( +-  0,09% )
+       410 704 565      cycles                           #    2,788 GHz                         ( +-  0,07% )
+     1 006 913 040      instructions                     #    2,45  insn per cycle              ( +-  0,01% )
+         1 468 120      cache-references                 #    9,966 M/sec                       ( +-  1,29% )
+           339 798      cache-misses                     #   23,15% of all cache refs           ( +-  5,16% )
+                75      context-switches                 #  509,138 /sec                        ( +- 12,03% )
+                 2      cpu-migrations                   #   13,577 /sec                        ( +- 13,33% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+           0,07836 +- 0,00556 seconds time elapsed  ( +-  7,09% )
+

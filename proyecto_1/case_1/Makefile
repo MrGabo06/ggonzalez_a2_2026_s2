@@ -40,6 +40,15 @@ THREAD_LIST  ?= 1 2 3 4
 VTHREAD_LIST ?= 1 2 4 8 16
 SMT_COMBOS   ?= 1:1 2:1 4:1 4:2 4:3 4:4
 
+# SMT_PIN : politica de pinning del modelo smt (ver engines/smt.c).
+#   cores    (default) : hilo t -> CPU logica (t % nucleos_fisicos). Los hilos
+#                        extra se multiplexan en la MISMA CPU logica; nunca
+#                        usa las CPUs hermanas (Hyper-Threading).
+#   siblings           : los hilos de un nucleo se reparten entre sus CPUs
+#                        logicas hermanas -> SMT real si el HT esta encendido.
+# Ejemplo: make sweep SMT_PIN=siblings
+SMT_PIN      ?= cores
+
 # ------- parametros para el perfilado con perf (M4) ----------------------
 # Independientes de N/BLOCK_SIZE/SEED de arriba para no interferir con el
 # sweep estadistico.
@@ -103,7 +112,7 @@ run-coarse: $(BUILD)/coarseGrained ## Run coarse-grained model once
 	$(BUILD)/coarseGrained $(N) $(BLOCK_SIZE) $(THREADS) $(SEED)
 
 run-smt: $(BUILD)/smt ## Run SMT (software approximation) once
-	$(BUILD)/smt $(N) $(BLOCK_SIZE) $(SMT_CORES) $(SMT_FACTOR) $(SEED)
+	$(BUILD)/smt $(N) $(BLOCK_SIZE) $(SMT_CORES) $(SMT_FACTOR) $(SEED) $(SMT_PIN)
 
 run-cmp: $(BUILD)/cmp ## Run CMP model once
 	$(BUILD)/cmp $(N) $(BLOCK_SIZE) $(THREADS) $(SEED)
@@ -126,9 +135,9 @@ experiments: build results-dir ## Run ITER (default 200) repetitions per model, 
 	   for i in $$(seq 2 $(ITER)); do \
 	     $(BUILD)/coarseGrained $(N) $(BLOCK_SIZE) $(THREADS) $$(($(SEED)+i)) | tail -n +2; \
 	   done ) > $(RESULTS)/coarse_grained.csv
-	@( $(BUILD)/smt $(N) $(BLOCK_SIZE) $(SMT_CORES) $(SMT_FACTOR) $(SEED); \
+	@( $(BUILD)/smt $(N) $(BLOCK_SIZE) $(SMT_CORES) $(SMT_FACTOR) $(SEED) $(SMT_PIN); \
 	   for i in $$(seq 2 $(ITER)); do \
-	     $(BUILD)/smt $(N) $(BLOCK_SIZE) $(SMT_CORES) $(SMT_FACTOR) $$(($(SEED)+i)) | tail -n +2; \
+	     $(BUILD)/smt $(N) $(BLOCK_SIZE) $(SMT_CORES) $(SMT_FACTOR) $$(($(SEED)+i)) $(SMT_PIN) | tail -n +2; \
 	   done ) > $(RESULTS)/smt.csv
 	@( $(BUILD)/cmp $(N) $(BLOCK_SIZE) $(THREADS) $(SEED); \
 	   for i in $$(seq 2 $(ITER)); do \
@@ -185,10 +194,10 @@ sweep: build results-dir ## Run ITER repetitions for EACH thread-count in *_LIST
 	  echo "  -> physical_cores=$$pc smt_factor=$$sf"; \
 	  for i in $$(seq 1 $(ITER)); do \
 	    if [ $$first -eq 1 ]; then \
-	      $(BUILD)/smt $(N) $(BLOCK_SIZE) $$pc $$sf $$(($(SEED)+i)) >> $(RESULTS)/smt.csv; \
+	      $(BUILD)/smt $(N) $(BLOCK_SIZE) $$pc $$sf $$(($(SEED)+i)) $(SMT_PIN) >> $(RESULTS)/smt.csv; \
 	      first=0; \
 	    else \
-	      $(BUILD)/smt $(N) $(BLOCK_SIZE) $$pc $$sf $$(($(SEED)+i)) | tail -n +2 >> $(RESULTS)/smt.csv; \
+	      $(BUILD)/smt $(N) $(BLOCK_SIZE) $$pc $$sf $$(($(SEED)+i)) $(SMT_PIN) | tail -n +2 >> $(RESULTS)/smt.csv; \
 	    fi; \
 	  done; \
 	done
@@ -246,7 +255,7 @@ perf-smt: build perf-results-dir ## perf stat (PERF_REPEAT runs each) on SMT for
 	  sf=$$(echo $$combo | cut -d: -f2); \
 	  echo "=== perf stat smt physical_cores=$$pc smt_factor=$$sf (x$(PERF_REPEAT)) ==="; \
 	  perf stat -r $(PERF_REPEAT) -e $(PERF_STAT_EVENTS) \
-	    $(BUILD)/smt $(PERF_N) $(PERF_BLOCK_SIZE) $$pc $$sf $(PERF_SEED) \
+	    $(BUILD)/smt $(PERF_N) $(PERF_BLOCK_SIZE) $$pc $$sf $(PERF_SEED) $(SMT_PIN) \
 	    2>&1 | tee $(PERF_RESULTS)/03-smt-$${pc}x$${sf}.txt; \
 	done
 
@@ -295,7 +304,7 @@ PERF_ATTACH_DELAY ?= 0.1
 
 perf-smt-percpu: build perf-results-dir ## Per-thread perf stat of SMT at PERF_CORES x2 via `perf stat -p PID` (se adjunta al proceso ya vivo, evita el modo -a system-wide)
 	@rm -f $(PERF_RESULTS)/04-smt-percpu-output.csv $(PERF_RESULTS)/04-smt-per-thread.txt
-	@( $(BUILD)/smt $(PERF_PERCPU_N) $(PERF_BLOCK_SIZE) $(PERF_CORES) 2 $(PERF_SEED) \
+	@( $(BUILD)/smt $(PERF_PERCPU_N) $(PERF_BLOCK_SIZE) $(PERF_CORES) 2 $(PERF_SEED) $(SMT_PIN) \
 	     > $(PERF_RESULTS)/04-smt-percpu-output.csv & \
 	   SMT_PID=$$!; \
 	   echo "smt PID=$$SMT_PID, esperando $(PERF_ATTACH_DELAY)s a que nazcan los hilos..."; \
@@ -315,7 +324,7 @@ perf-smt-percpu: build perf-results-dir ## Per-thread perf stat of SMT at PERF_C
 perf-threads-cpu: build perf-results-dir ## Muestrea con `ps -L` cada 0.1s que CPU logica (psr) usa cada hilo de smt durante toda la corrida (evidencia directa y confiable para "uso de CPU por hilo logico")
 	@rm -f $(PERF_RESULTS)/04b-smt-output.csv
 	@echo "timestamp,pid,tid,psr,pcpu,comm" > $(PERF_RESULTS)/04b-smt-thread-cpu-samples.csv
-	@( $(BUILD)/smt $(PERF_PERCPU_N) $(PERF_BLOCK_SIZE) $(PERF_CORES) 2 $(PERF_SEED) \
+	@( $(BUILD)/smt $(PERF_PERCPU_N) $(PERF_BLOCK_SIZE) $(PERF_CORES) 2 $(PERF_SEED) $(SMT_PIN) \
 	     > $(PERF_RESULTS)/04b-smt-output.csv & \
 	   SMT_PID=$$!; \
 	   echo "smt PID=$$SMT_PID, muestreando ps -L cada 0.1s hasta que termine..."; \
@@ -333,7 +342,7 @@ perf-threads-cpu: build perf-results-dir ## Muestrea con `ps -L` cada 0.1s que C
 
 perf-record-smt: build perf-results-dir ## perf record + report of SMT at PERF_CORES x2 (hotspots inside mat_block_full)
 	perf record -g -o $(PERF_RESULTS)/smt-$(PERF_CORES)x2.data -- \
-	  $(BUILD)/smt $(PERF_N) $(PERF_BLOCK_SIZE) $(PERF_CORES) 2 $(PERF_SEED)
+	  $(BUILD)/smt $(PERF_N) $(PERF_BLOCK_SIZE) $(PERF_CORES) 2 $(PERF_SEED) $(SMT_PIN)
 	perf report -i $(PERF_RESULTS)/smt-$(PERF_CORES)x2.data --stdio \
 	  > $(PERF_RESULTS)/05-smt-$(PERF_CORES)x2-report.txt
 	@echo "-> $(PERF_RESULTS)/05-smt-$(PERF_CORES)x2-report.txt"

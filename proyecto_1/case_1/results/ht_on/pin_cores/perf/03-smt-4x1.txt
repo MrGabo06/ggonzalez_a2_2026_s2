@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033580269,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033137624,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033393904,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033196743,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.034119306,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033168037,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033172064,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.037428538,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.037667246,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.036579326,334737756981.249573
+
+ Performance counter stats for 'build/smt 512 64 4 1 42' (10 runs):
+
+            147,21 msec task-clock                       #    2,977 CPUs utilized               ( +-  0,36% )
+       411 067 300      cycles                           #    2,792 GHz                         ( +-  0,36% )
+     1 006 509 251      instructions                     #    2,45  insn per cycle              ( +-  0,01% )
+         1 367 307      cache-references                 #    9,288 M/sec                       ( +-  0,52% )
+           164 710      cache-misses                     #   12,05% of all cache refs           ( +-  6,21% )
+                 5      context-switches                 #   33,966 /sec                        ( +- 10,43% )
+                 2      cpu-migrations                   #   13,586 /sec                        ( +-  7,45% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+          0,049450 +- 0,000620 seconds time elapsed  ( +-  1,25% )
+

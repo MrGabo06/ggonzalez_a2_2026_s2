@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '25658':
+
+             smt-25658             8 607,38 msec task-clock                       #    3,372 CPUs utilized             
+             smt-25658       24 037 663 676      cycles                           #    2,793 GHz                       
+             smt-25658       61 750 518 583      instructions                     #    2,57  insn per cycle            
+
+       2,552595048 seconds time elapsed
+

@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.029391135,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.031659685,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.032584726,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.030459973,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.030176773,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.031303196,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.038821619,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.036132979,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.034166125,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.036091249,334737756981.249573
+
+ Performance counter stats for 'build/smt 512 64 4 2 42 siblings' (10 runs):
+
+            234,43 msec task-clock                       #    4,853 CPUs utilized               ( +-  0,98% )
+       654 209 004      cycles                           #    2,791 GHz                         ( +-  0,98% )
+     1 007 564 775      instructions                     #    1,54  insn per cycle              ( +-  0,00% )
+         1 310 408      cache-references                 #    5,590 M/sec                       ( +-  1,99% )
+           301 621      cache-misses                     #   23,02% of all cache refs           ( +-  5,77% )
+                48      context-switches                 #  204,752 /sec                        ( +-  6,03% )
+                 7      cpu-migrations                   #   29,860 /sec                        ( +- 11,75% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+           0,04831 +- 0,00111 seconds time elapsed  ( +-  2,31% )
+

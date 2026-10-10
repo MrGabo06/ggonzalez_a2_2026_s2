@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.038052618,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.038358392,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.040132494,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.039374155,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.041549660,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.037837822,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.041474558,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.034680584,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.035224632,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.034500881,334737756981.249573
+
+ Performance counter stats for 'build/smt 512 64 4 4 42 cores' (10 runs):
+
+            147,70 msec task-clock                       #    2,802 CPUs utilized               ( +-  0,13% )
+       411 974 987      cycles                           #    2,789 GHz                         ( +-  0,13% )
+     1 008 198 469      instructions                     #    2,45  insn per cycle              ( +-  0,01% )
+         1 539 024      cache-references                 #   10,420 M/sec                       ( +-  0,74% )
+           284 055      cache-misses                     #   18,46% of all cache refs           ( +-  7,48% )
+                56      context-switches                 #  379,149 /sec                        ( +-  2,87% )
+                12      cpu-migrations                   #   81,246 /sec                        ( +-  5,44% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+          0,052717 +- 0,000842 seconds time elapsed  ( +-  1,60% )
+

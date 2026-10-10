@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033413300,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033517788,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.037210499,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033786973,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.042902716,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.034567715,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.034149474,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.034220433,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.037921817,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.034334908,334737756981.249573
+
+ Performance counter stats for 'build/smt 512 64 4 1 42 siblings' (10 runs):
+
+            150,81 msec task-clock                       #    2,979 CPUs utilized               ( +-  1,41% )
+       421 127 085      cycles                           #    2,792 GHz                         ( +-  1,41% )
+     1 006 743 734      instructions                     #    2,39  insn per cycle              ( +-  0,01% )
+         1 413 482      cache-references                 #    9,372 M/sec                       ( +-  0,73% )
+           243 569      cache-misses                     #   17,23% of all cache refs           ( +-  4,55% )
+                 6      context-switches                 #   39,784 /sec                        ( +-  9,77% )
+                 3      cpu-migrations                   #   19,892 /sec                        ( +- 14,23% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+          0,050634 +- 0,000960 seconds time elapsed  ( +-  1,90% )
+
