@@ -21,9 +21,9 @@ RESULTS     := results
 HT_MODE    := $(shell HT="$(HT)" python3 scripts/ht_mode.py 2>/dev/null || echo on)
 RESULTS_HT := $(RESULTS)/ht_$(HT_MODE)
 
-# Opciones extra de bench.py en `make bench-oficial`. Por defecto --live (se ve cada corrida,
-# con una pausa corta para que la terminal no interfiera). Modo silencioso: make bench-oficial BENCH_OPTS=
-BENCH_OPTS ?= --live
+# Opciones extra de bench.py en `make bench-oficial`. Vacio por defecto: se mide en silencio
+# (imprimir cada corrida mientras se mide sesga los tiempos). El detalle de cada corrida sale al final.
+BENCH_OPTS ?=
 
 COMMON_SRC := $(wildcard $(SRC_DIR)/*.cpp)
 COMMON_OBJ := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD)/%.o,$(COMMON_SRC))
@@ -39,7 +39,7 @@ BINARIES   := $(patsubst $(ENGINES_DIR)/%.cpp,$(BUILD)/%,$(ENGINE_SRC))
 # Targets
 # =================================================
 
-.PHONY: all help build clean distclean clean-images ht-mode bench bench-oficial analyze run perf perf-report
+.PHONY: all help build clean distclean clean-images ht-mode bench bench-oficial bench-vivo analyze run perf perf-report
 
 # Sin esto, make trata build/*.o como archivos "intermedios" y los borra
 # apenas termina de enlazar. .SECONDARY los conserva para no recompilar
@@ -84,6 +84,10 @@ bench: $(BENCH_BINARIES) ## Corre scripts/bench.py (prueba corta, 5 corridas). I
 
 bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> results/ht_<on|off>/benchmark/bench_oficial.csv
 	python3 scripts/bench.py --runs 200 $(BENCH_OPTS) --out bench_oficial.csv
+
+# Solo para ver las corridas en vivo (demo): sesga los tiempos, NO usar para datos oficiales.
+bench-vivo: $(BENCH_BINARIES) ## Corre bench.py mostrando cada corrida en vivo (solo para ver) -> prueba_vivo.csv
+	python3 scripts/bench.py --runs 200 --live --out prueba_vivo.csv
 
 # CSV por defecto para `make analyze`; cambialo con: make analyze CSV=otro.csv
 CSV ?= $(RESULTS_HT)/benchmark/bench_oficial.csv
