@@ -1,0 +1,49 @@
+# sequential | 2026-10-10T17:29:24-06:00 | 7.0.0-31-generic | modo: -a -A | HT: on
+# comando (repetido 20 veces): ./build/sequential 800 600 12 4
+# eventos: cycles,instructions,cycle_activity.stalls_total,cpu_clk_unhalted.one_thread_active,cache-misses
+
+ Performance counter stats for 'system wide':
+
+CPU0        1.993.683.804      cycles                                                                
+CPU1          196.779.742      cycles                                                                
+CPU2          134.826.283      cycles                                                                
+CPU3        1.850.650.196      cycles                                                                
+CPU4          984.280.048      cycles                                                                
+CPU5          152.112.331      cycles                                                                
+CPU6          116.021.541      cycles                                                                
+CPU7          317.845.347      cycles                                                                
+CPU0        5.800.224.879      instructions                                                          
+CPU1          326.552.673      instructions                                                          
+CPU2          181.568.797      instructions                                                          
+CPU3        5.236.361.190      instructions                                                          
+CPU4        2.787.801.533      instructions                                                          
+CPU5          286.184.485      instructions                                                          
+CPU6          143.752.363      instructions                                                          
+CPU7          751.177.827      instructions                                                          
+CPU0          218.978.594      cycle_activity.stalls_total                                           
+CPU1           78.971.305      cycle_activity.stalls_total                                           
+CPU2           66.121.658      cycle_activity.stalls_total                                           
+CPU3          238.783.872      cycle_activity.stalls_total                                           
+CPU4          121.453.743      cycle_activity.stalls_total                                           
+CPU5           53.224.310      cycle_activity.stalls_total                                           
+CPU6           58.485.254      cycle_activity.stalls_total                                           
+CPU7           76.910.932      cycle_activity.stalls_total                                           
+CPU0           16.657.096      cpu_clk_unhalted.one_thread_active                                      
+CPU1            2.370.930      cpu_clk_unhalted.one_thread_active                                      
+CPU2            1.457.822      cpu_clk_unhalted.one_thread_active                                      
+CPU3           15.657.634      cpu_clk_unhalted.one_thread_active                                      
+CPU4            8.245.429      cpu_clk_unhalted.one_thread_active                                      
+CPU5            1.370.664      cpu_clk_unhalted.one_thread_active                                      
+CPU6            1.276.469      cpu_clk_unhalted.one_thread_active                                      
+CPU7            2.583.021      cpu_clk_unhalted.one_thread_active                                      
+CPU0              392.047      cache-misses                                                          
+CPU1              557.013      cache-misses                                                          
+CPU2              494.415      cache-misses                                                          
+CPU3              678.209      cache-misses                                                          
+CPU4              430.261      cache-misses                                                          
+CPU5              500.261      cache-misses                                                          
+CPU6              597.618      cache-misses                                                          
+CPU7              529.562      cache-misses                                                          
+
+       1,147319418 seconds time elapsed
+

@@ -1,0 +1,29 @@
+# smt_ctrl | 2026-10-10T18:10:49-06:00 | 7.0.0-31-generic | modo: -a -A | HT: off
+# comando (repetido 20 veces): ./build/smt 800 600 12 4 0,1
+# eventos: cycles,instructions,cycle_activity.stalls_total,cpu_clk_unhalted.one_thread_active,cache-misses
+
+ Performance counter stats for 'system wide':
+
+CPU0        2.628.051.531      cycles                                                                
+CPU1        2.530.419.824      cycles                                                                
+CPU2           95.077.105      cycles                                                                
+CPU3          160.943.914      cycles                                                                
+CPU0        7.718.639.121      instructions                                                          
+CPU1        7.416.462.805      instructions                                                          
+CPU2           52.352.709      instructions                                                          
+CPU3          134.778.832      instructions                                                          
+CPU0          258.757.473      cycle_activity.stalls_total                                           
+CPU1          254.277.609      cycle_activity.stalls_total                                           
+CPU2           66.946.949      cycle_activity.stalls_total                                           
+CPU3           98.859.621      cycle_activity.stalls_total                                           
+CPU0           22.899.276      cpu_clk_unhalted.one_thread_active                                      
+CPU1           22.083.270      cpu_clk_unhalted.one_thread_active                                      
+CPU2            1.517.848      cpu_clk_unhalted.one_thread_active                                      
+CPU3            2.030.654      cpu_clk_unhalted.one_thread_active                                      
+CPU0              543.148      cache-misses                                                          
+CPU1              549.677      cache-misses                                                          
+CPU2              579.266      cache-misses                                                          
+CPU3              974.160      cache-misses                                                          
+
+       0,620459498 seconds time elapsed
+

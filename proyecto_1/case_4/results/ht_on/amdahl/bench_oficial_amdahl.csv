@@ -1,0 +1,13 @@
+engine,threads,region,en_ajuste,speedup_medido,speedup_amdahl_ajustado
+cmp,1,fisico,no,0.9831797245335668,1.0
+cmp,2,fisico,si,1.8626531814469736,1.8886254088498846
+cmp,4,fisico,si,3.4565423557665738,3.3987197905891025
+cmp,8,smt,no,4.330801660575925,5.662519314727365
+coarseGrained,1,fisico,no,0.99979050564149,1.0
+coarseGrained,2,fisico,si,0.9946657712186514,1.0
+coarseGrained,4,fisico,si,0.9936684703026077,1.0
+coarseGrained,8,smt,no,0.9874437144204474,1.0
+fineGrained,1,fisico,no,0.9841502970931418,1.0
+fineGrained,2,fisico,si,0.9806809853724022,1.0
+fineGrained,4,fisico,si,0.9664559085070067,1.0
+fineGrained,8,smt,no,0.9650912502822228,1.0
