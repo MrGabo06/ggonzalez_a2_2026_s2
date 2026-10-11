@@ -7,7 +7,13 @@ Lee los dos CSV oficiales que genera bench.py:
     results/ht_off/benchmark/bench_oficial.csv
 y escribe en results/comparacion_ht/:
     comparacion_ht.csv   tabla: speedup (+/- IC95%) de cada configuracion con HT on y off
-    comparacion_ht.png   graficas: escalabilidad de cmp on/off y speedup por configuracion
+    comparacion_ht.png   graficas: SMT por hardware vs por software (2 hilos) y escalabilidad de cmp
+
+El enunciado (4.1.c) pide aislar el efecto de SMT comparando contra la ejecucion con SMT apagado.
+Con HT apagado no existen CPUs hermanas, asi que el SMT por hardware (`smt`) solo se mide con HT
+encendido; la aproximacion por software es `smt_shared` (los mismos 2 hilos sobre UNA sola CPU
+logica, sobre-suscripcion pura) y existe en ambos modos. `smt_ctrl` (2 nucleos distintos) es el
+control en ambos modos.
 
 Como cada modo se mide en una sesion distinta (hay que reiniciar a la BIOS), NO se comparan
 tiempos absolutos sino el speedup de cada sesion contra SU PROPIO sequential. Dos speedups se
@@ -32,7 +38,7 @@ DEFAULT_ON = CASE4_DIR / "results" / "ht_on" / "benchmark" / "bench_oficial.csv"
 DEFAULT_OFF = CASE4_DIR / "results" / "ht_off" / "benchmark" / "bench_oficial.csv"
 DEFAULT_OUT = CASE4_DIR / "results" / "comparacion_ht"
 
-ENGINES = ["cmp", "smt_ctrl", "smt", "coarseGrained", "fineGrained"]
+ENGINES = ["cmp", "smt_ctrl", "smt", "smt_shared", "coarseGrained", "fineGrained"]
 INK, MUTED = "#0b0b0b", "#52514e"
 COLOR_ON, COLOR_OFF = "#2a78d6", "#d9a400"
 
@@ -50,7 +56,7 @@ def session_metrics(csv_path: Path):
             continue
         mean, _std, sem, _ci = mean_ci95(values)
         s, (lo, hi) = speedup_ci(seq_mean, seq_sem, mean, sem)
-        out[(engine, threads)] = dict(time=mean, speedup=s, lo=lo, hi=hi, n=len(values))
+        out[(engine, threads)] = dict(time=mean, sem=sem, speedup=s, lo=lo, hi=hi, n=len(values))
     return out, seq_mean
 
 
@@ -110,6 +116,27 @@ def main():
         w.writeheader()
         w.writerows(rows)
     print(f"\ntabla guardada en {csv_path}")
+    # ---- efecto de SMT: hardware (hermanas) vs software (misma CPU) vs 2 nucleos
+    print("\n=== Efecto de SMT (2 hilos): hardware vs software ===")
+    smt_on, shared_on, ctrl_on = on.get(("smt", 2)), on.get(("smt_shared", 2)), on.get(("smt_ctrl", 2))
+    shared_off, ctrl_off = off.get(("smt_shared", 2)), off.get(("smt_ctrl", 2))
+    if smt_on and shared_on:
+        ratio, ci = speedup_ci(shared_on["time"], shared_on["sem"], smt_on["time"], smt_on["sem"])
+        print(f"  HT on : smt (hermanas) vs smt_shared (misma CPU): {ratio:.3f}x mas rapido "
+              f"(IC95% [{ci[0]:.3f}, {ci[1]:.3f}]) -> el 2do hilo en el mismo nucleo aporta {100 * (ratio - 1):.0f}%")
+        if ctrl_on:
+            gain_smt = shared_on["time"] / smt_on["time"] - 1
+            gain_ctrl = shared_on["time"] / ctrl_on["time"] - 1
+            print(f"  HT on : un 2do nucleo completo aporta {100 * gain_ctrl:.0f}%; el SMT por hardware entrega "
+                  f"{100 * gain_smt / gain_ctrl:.0f}% de eso")
+    if shared_off and ctrl_off:
+        ratio, ci = speedup_ci(shared_off["time"], shared_off["sem"], ctrl_off["time"], ctrl_off["sem"])
+        print(f"  HT off: smt_ctrl (2 nucleos) vs smt_shared (misma CPU): {ratio:.3f}x mas rapido "
+              f"(IC95% [{ci[0]:.3f}, {ci[1]:.3f}]); sin hermanas, el SMT por hardware no existe")
+    if shared_on and shared_off:
+        d = 100 * (shared_off["time"] / shared_on["time"] - 1)
+        print(f"  control: smt_shared tarda {shared_on['time'] * 1000:.2f} ms (HT on) y {shared_off['time'] * 1000:.2f} ms "
+              f"(HT off), {d:+.1f}% -> deberia ser ~0 (no usa hermanas)")
     print("Nota: el IC solo recoge el ruido de cada sesion; diferencias de pocos % entre sesiones deben leerse con cautela.")
 
     # ------------------------------------------------------------------ graficas
@@ -117,41 +144,16 @@ def main():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, (axa, axb) = plt.subplots(1, 2, figsize=(13, 5.4), gridspec_kw={"width_ratios": [1, 1.25]})
+    fig, axb = plt.subplots(1, 1, figsize=(8.6, 5.6))
     fig.patch.set_facecolor("white")
 
-    # A) escalabilidad de cmp con HT on y off
-    def series(d, engine):
-        pts = sorted((t, v) for (e, t), v in d.items() if e == engine)
-        return [p[0] for p in pts], [p[1]["speedup"] for p in pts], \
-               [(p[1]["hi"] - p[1]["lo"]) / 2 for p in pts]
-
-    xmax = max(t for (_e, t) in list(on) + list(off))
-    axa.plot([0.5, xmax], [0.5, xmax], "-.", color="#9a9893", lw=1.2, label="speedup lineal ideal")
-    xs, ys, es = series(on, "cmp")
-    axa.errorbar(xs, ys, yerr=es, color=COLOR_ON, marker="o", ms=8, lw=2.4, capsize=3, label="cmp, HT encendido")
-    xs, ys, es = series(off, "cmp")
-    axa.errorbar([x + 0.06 for x in xs], ys, yerr=es, color=COLOR_OFF, marker="s", ms=8, lw=2.0, ls="--",
-                 mfc="white", mew=1.8, capsize=3, label="cmp, HT apagado")
-    cores = 4
-    axa.axvline(cores, color="#bdbcb6", lw=1)
-    axa.axvspan(cores + 0.001, xmax + 0.5, color="#efeeea", zorder=0)
-    axa.text(cores + 0.1, 0.62, "mas hilos que nucleos fisicos\n(solo existe con HT encendido)", fontsize=8.5,
-             color=MUTED, va="bottom")
-    axa.set_xlim(0.5, xmax + 0.5)
-    axa.set_ylim(0.5, 5.6)
-    axa.set_xticks(sorted({t for (_e, t) in list(on) + list(off)}))
-    axa.set_xlabel("cantidad de hilos", color=INK)
-    axa.set_ylabel("speedup (t sequential de la sesion / t del motor)", color=INK)
-    axa.set_title("Escalabilidad de cmp", loc="left", color=INK, fontsize=12)
-    axa.grid(axis="y", color="#e6e5e0", lw=0.8)
-    axa.set_axisbelow(True)
-    axa.legend(loc="upper left", frameon=False, fontsize=9)
-
     # B) speedup por configuracion (barras HT on vs off)
-    chosen = [("cmp", 2), ("smt_ctrl", 2), ("smt", 2), ("cmp", 4), ("coarseGrained", 4), ("fineGrained", 4), ("cmp", 8)]
+    chosen = [("smt_shared", 2), ("smt", 2), ("smt_ctrl", 2)]
     chosen = [k for k in chosen if k in on or k in off]
-    labels = [f"{e}\n{t} hilos" for e, t in chosen]
+    names = {"smt_shared": "smt_shared\n2 hilos, misma CPU\n(SMT por software)",
+             "smt": "smt\n2 hilos hermanos\n(SMT por hardware)",
+             "smt_ctrl": "smt_ctrl\n2 hilos, 2 nucleos\n(control)"}
+    labels = [names.get(e, f"{e}\n{t} hilos") for e, t in chosen]
     pos = list(range(len(chosen)))
     w = 0.38
     for i, key in enumerate(chosen):
@@ -164,21 +166,22 @@ def main():
             axb.errorbar(i + shift, v["speedup"], yerr=(v["hi"] - v["lo"]) / 2, color=INK, capsize=3, lw=1.1, zorder=4)
             axb.text(i + shift, v["hi"] + 0.07, f"{v['speedup']:.2f}", ha="center", va="bottom", fontsize=8.5, color=INK)
         if key not in off:
-            axb.text(i + w / 2, 0.08, "no\nexiste", ha="center", va="bottom", fontsize=8, color=MUTED)
+            axb.text(i + w / 2, 0.08, "no existe\n(sin hermanas)", ha="center", va="bottom", fontsize=8, color=MUTED)
         if key not in on:
             axb.text(i - w / 2, 0.08, "no\nexiste", ha="center", va="bottom", fontsize=8, color=MUTED)
     axb.set_xticks(pos)
     axb.set_xticklabels(labels, fontsize=9)
     axb.axhline(1.0, color="#9a9893", lw=0.8, zorder=1)
     axb.set_ylabel("speedup contra sequential de la sesion", color=INK)
-    axb.set_title("Speedup por configuracion", loc="left", color=INK, fontsize=12)
+    axb.set_title("SMT por hardware vs por software (2 hilos)", loc="left", color=INK, fontsize=12)
+    axb.set_ylim(0, 2.5)
     axb.grid(axis="y", color="#e6e5e0", lw=0.8, zorder=0)
     axb.set_axisbelow(True)
     from matplotlib.patches import Patch
     axb.legend(handles=[Patch(facecolor=COLOR_ON, label="HT encendido"),
                         Patch(facecolor=COLOR_OFF, hatch="//", edgecolor="#7a5d00", label="HT apagado")],
                loc="upper left", frameon=False, fontsize=9)
-    for ax in (axa, axb):
+    for ax in (axb,):
         for side in ("top", "right"):
             ax.spines[side].set_visible(False)
         for side in ("left", "bottom"):

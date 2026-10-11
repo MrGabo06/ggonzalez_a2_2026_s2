@@ -9,7 +9,12 @@ Motores medidos:
   smt_ctrl  -> control: los mismos 2 hilos (mismo binario `smt`), pero en 2
                nucleos fisicos distintos. smt contra smt_ctrl aisla el efecto
                de compartir nucleo (SMT) sin tocar la BIOS.
-smt/smt_ctrl solo corren en Linux fisico con el binario build/smt compilado;
+  smt_shared -> los mismos 2 hilos (mismo binario `smt`) pero fijados a la MISMA CPU
+               logica (ej. 0,0): sobre-suscripcion pura, los dos hilos se turnan en
+               un solo hilo de hardware. Es la aproximacion por SOFTWARE de SMT y existe
+               con HT encendido y apagado; el enunciado pide compararla contra el SMT
+               por hardware (smt con HT encendido).
+smt/smt_ctrl/smt_shared solo corren en Linux fisico con el binario build/smt compilado;
 los IDs de CPU se detectan con scripts/detect_cpus.sh (o se fuerzan con
 --smt-cpus / --smt-ctrl-cpus). Si no hay pareja hermana (SMT apagado), smt se
 omite y se avisa; smt_ctrl se mide igual.
@@ -51,6 +56,7 @@ SEQUENTIAL = "sequential"
 # hilos = cantidad de IDs. En el CSV se etiqueta con threads = cantidad de IDs.
 SMT = "smt"
 SMT_CTRL = "smt_ctrl"
+SMT_SHARED = "smt_shared"
 
 
 def run_once(binary: Path, args: list[str]) -> float:
@@ -90,6 +96,10 @@ def plan_smt(args) -> list[tuple[str, str]]:
     detected = detect_cpus()
     sibling = args.smt_cpus or detected.get("sibling")
     separate = args.smt_ctrl_cpus or detected.get("separate")
+    shared = args.smt_shared_cpus
+    if not shared and separate:
+        first = separate.split(",")[0]
+        shared = f"{first},{first}"  # los 2 hilos en la misma CPU logica
     plan = []
     if sibling:
         plan.append((SMT, sibling))
@@ -100,6 +110,10 @@ def plan_smt(args) -> list[tuple[str, str]]:
         plan.append((SMT_CTRL, separate))
     else:
         print("smt_ctrl: no pude elegir 2 nucleos distintos -> se omite. Se puede forzar con --smt-ctrl-cpus A,B", file=sys.stderr)
+    if shared:
+        plan.append((SMT_SHARED, shared))
+    else:
+        print("smt_shared: no pude elegir una CPU -> se omite. Se puede forzar con --smt-shared-cpus A,A", file=sys.stderr)
     return plan
 
 
@@ -127,6 +141,7 @@ def main():
     ap.add_argument("--no-smt", action="store_true", help="no medir smt ni smt_ctrl")
     ap.add_argument("--smt-cpus", type=str, default=None, help="IDs de CPU logica para smt (hermanas), ej. 3,7 (default: autodeteccion)")
     ap.add_argument("--smt-ctrl-cpus", type=str, default=None, help="IDs de CPU logica para smt_ctrl (nucleos distintos), ej. 0,1 (default: autodeteccion)")
+    ap.add_argument("--smt-shared-cpus", type=str, default=None, help="IDs de CPU logica para smt_shared (los 2 hilos en la MISMA CPU), ej. 0,0 (default: la primera CPU de smt_ctrl, repetida)")
     args = ap.parse_args()
 
     mode, source = ht_mode.detect_mode()

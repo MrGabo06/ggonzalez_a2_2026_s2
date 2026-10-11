@@ -39,7 +39,7 @@ BINARIES   := $(patsubst $(ENGINES_DIR)/%.cpp,$(BUILD)/%,$(ENGINE_SRC))
 # Targets
 # =================================================
 
-.PHONY: all help build clean distclean clean-images ht-mode bench bench-oficial bench-vivo analyze run perf perf-report
+.PHONY: all help build clean distclean clean-images ht-mode bench bench-oficial bench-vivo analyze compare-ht run perf perf-report
 
 # Sin esto, make trata build/*.o como archivos "intermedios" y los borra
 # apenas termina de enlazar. .SECONDARY los conserva para no recompilar
@@ -100,6 +100,9 @@ perf-report: ## Resume las capturas de perf en tabla y graficas (results/ht_<on|
 
 analyze: ## Corre scripts/analyze.py sobre el CSV oficial del modo actual (otro: make analyze CSV=ruta.csv)
 	python3 scripts/analyze.py $(CSV)
+
+compare-ht: ## Compara HT encendido vs apagado (results/ht_on y results/ht_off) -> results/comparacion_ht/
+	python3 scripts/compare_ht.py
 
 run: $(BENCH_BINARIES) ## Corre cada motor una vez (control: compara imagenes contra sequential) - ver scripts/run_all.sh
 	@$(MAKE) $(BUILD)/smt 2>/dev/null || true
