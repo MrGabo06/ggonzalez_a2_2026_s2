@@ -175,11 +175,18 @@ def main():
             order.extend((ci, r) for ci in idx)
         print(f"modo: intercalado, orden aleatorio por ronda (semilla {args.seed})", file=sys.stderr)
 
-    for ci, run_idx in order:
+    # IMPORTANTE: no imprimir una linea por corrida. La terminal grafica tarda unos ms en
+    # dibujarla justo cuando empieza la siguiente corrida, le quita tiempo de CPU a los
+    # workers (sobre todo con HT apagado o con tantos hilos como CPUs) y sesga la medicion.
+    # Por eso solo se avisa el progreso cada 5%.
+    total = len(order)
+    step = max(1, total // 20)
+    for done, (ci, run_idx) in enumerate(order, start=1):
         engine, threads, binary, bargs, text = configs[ci]
         t = run_once(binary, bargs)
         rows.append((ci, engine, threads, run_idx, t))
-        print(f"  {text:<26} run {run_idx}/{args.runs}: {t:.6f}s", file=sys.stderr)
+        if done % step == 0 or done == total:
+            print(f"  progreso: {done}/{total} ({100 * done // total}%)", file=sys.stderr)
 
     # El CSV queda ordenado por configuracion y numero de corrida (igual que antes).
     rows.sort(key=lambda x: (x[0], x[3]))
