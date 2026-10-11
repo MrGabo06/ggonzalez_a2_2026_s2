@@ -33,6 +33,7 @@ import random
 import statistics
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -116,6 +117,11 @@ def main():
     ap.add_argument("--no-interleave", action="store_true",
                     help="correr cada configuracion en bloque (modo viejo). Por defecto se intercalan: en cada ronda "
                          "se corre una vez cada configuracion, en orden aleatorio")
+    ap.add_argument("--live", action="store_true",
+                    help="imprimir cada corrida mientras se mide, con una pausa corta despues de cada una "
+                         "(el default muestra el detalle al final)")
+    ap.add_argument("--pausa", type=float, default=0.05,
+                    help="segundos de pausa despues de cada corrida en modo --live (default: 0.05)")
     ap.add_argument("--seed", type=int, default=0, help="semilla del orden aleatorio por ronda (default: 0)")
     ap.add_argument("--build", action="store_true", help="correr `make build` antes de medir")
     ap.add_argument("--no-smt", action="store_true", help="no medir smt ni smt_ctrl")
@@ -175,18 +181,35 @@ def main():
             order.extend((ci, r) for ci in idx)
         print(f"modo: intercalado, orden aleatorio por ronda (semilla {args.seed})", file=sys.stderr)
 
-    # IMPORTANTE: no imprimir una linea por corrida. La terminal grafica tarda unos ms en
-    # dibujarla justo cuando empieza la siguiente corrida, le quita tiempo de CPU a los
-    # workers (sobre todo con HT apagado o con tantos hilos como CPUs) y sesga la medicion.
-    # Por eso solo se avisa el progreso cada 5%.
+    # IMPORTANTE: no imprimir una linea por corrida MIENTRAS se mide. La terminal grafica tarda
+    # unos ms en dibujarla justo cuando empieza la siguiente corrida, le quita tiempo de CPU a
+    # los workers (sobre todo con HT apagado o con tantos hilos como CPUs) y sesga la medicion.
+    # Por eso el detalle de cada corrida se guarda en memoria y se imprime AL FINAL; durante la
+    # medicion solo se avisa el progreso cada 5%. Con --live se imprime en vivo, con una pausa por corrida.
     total = len(order)
     step = max(1, total // 20)
+    detail = []
+    if args.live:
+        print(f"modo --live: se imprime cada corrida y se pausa {args.pausa * 1000:.0f} ms despues de cada una "
+              f"para que la terminal no interfiera con la siguiente", file=sys.stderr)
     for done, (ci, run_idx) in enumerate(order, start=1):
         engine, threads, binary, bargs, text = configs[ci]
         t = run_once(binary, bargs)
         rows.append((ci, engine, threads, run_idx, t))
-        if done % step == 0 or done == total:
-            print(f"  progreso: {done}/{total} ({100 * done // total}%)", file=sys.stderr)
+        line = f"  {text:<26} run {run_idx}/{args.runs}: {t:.6f}s"
+        if args.live:
+            print(line, file=sys.stderr, flush=True)
+            # pausa para que la terminal termine de dibujar la linea ANTES de la proxima corrida;
+            # el tiempo medido lo toma el propio motor, asi que la pausa no cuenta en los resultados
+            time.sleep(args.pausa)
+        else:
+            detail.append(line)
+            if done % step == 0 or done == total:
+                print(f"  progreso: {done}/{total} ({100 * done // total}%)", file=sys.stderr)
+
+    if detail:
+        print("\nDetalle de cada corrida (en el orden en que se ejecutaron):", file=sys.stderr)
+        print("\n".join(detail), file=sys.stderr)
 
     # El CSV queda ordenado por configuracion y numero de corrida (igual que antes).
     rows.sort(key=lambda x: (x[0], x[3]))

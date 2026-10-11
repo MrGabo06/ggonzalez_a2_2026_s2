@@ -21,6 +21,10 @@ RESULTS     := results
 HT_MODE    := $(shell HT="$(HT)" python3 scripts/ht_mode.py 2>/dev/null || echo on)
 RESULTS_HT := $(RESULTS)/ht_$(HT_MODE)
 
+# Opciones extra de bench.py en `make bench-oficial`. Por defecto --live (se ve cada corrida,
+# con una pausa corta para que la terminal no interfiera). Modo silencioso: make bench-oficial BENCH_OPTS=
+BENCH_OPTS ?= --live
+
 COMMON_SRC := $(wildcard $(SRC_DIR)/*.cpp)
 COMMON_OBJ := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD)/%.o,$(COMMON_SRC))
 COMMON_HDR := $(wildcard $(SRC_DIR)/*.h)
@@ -54,8 +58,8 @@ build: $(BINARIES) ## Compile every engine found in engines/
 clean: ## Remove build artifacts only (results/ se conserva)
 	@rm -rf $(BUILD)
 
-# results/ guarda las 200 corridas oficiales y las capturas de perf, que NO
-# estan en git (results/ esta en .gitignore): borrarlo es irreversible.
+# results/ guarda las 200 corridas oficiales y las capturas de perf (los CSV, PNG y capturas
+# se versionan en git; las imagenes .bmp no): borrarlo borra el trabajo local sin commitear.
 distclean: clean ## Remove build artifacts AND results/ (irreversible)
 	@rm -rf $(RESULTS)
 
@@ -79,7 +83,7 @@ bench: $(BENCH_BINARIES) ## Corre scripts/bench.py (prueba corta, 5 corridas). I
 	python3 scripts/bench.py
 
 bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> results/ht_<on|off>/benchmark/bench_oficial.csv
-	python3 scripts/bench.py --runs 200 --out bench_oficial.csv
+	python3 scripts/bench.py --runs 200 $(BENCH_OPTS) --out bench_oficial.csv
 
 # CSV por defecto para `make analyze`; cambialo con: make analyze CSV=otro.csv
 CSV ?= $(RESULTS_HT)/benchmark/bench_oficial.csv
