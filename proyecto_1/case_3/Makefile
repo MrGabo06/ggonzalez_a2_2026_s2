@@ -24,7 +24,7 @@ HEADERS  := src/stencil_core.hpp $(wildcard src/common/*.hpp)
 # remain automatically documented
 # =================================================
 
-.PHONY: all help compile clean test-common dummy-fine dummy-coarse dummy-smt bench perf plots verify
+.PHONY: all help compile clean test-common dummy-fine dummy-coarse dummy-smt bench-env bench perf stats plots verify
 
 all: help
 
@@ -82,14 +82,29 @@ $(BUILD):
 clean: ## Remove build artifacts
 	rm -rf $(BUILD)
 
-bench: ## Phase 4: >=200 runs per configuration (needs physical hardware)
-	@echo "[TODO Phase 4] bench/run_all.sh (needs physical hardware)"
+bench-env: ## Phase 4: show whether the machine is ready to measure (sudo bench/setup_env.sh apply|revert)
+	@bench/setup_env.sh status
+	@bench/setup_env.sh check && echo "ready to measure"
 
-perf: ## Phase 4: perf capture, per logical thread (needs physical hardware)
-	@echo "[TODO Phase 4] bench/perf_capture.sh (needs physical hardware)"
+bench: compile ## Phase 4: >=200 shuffled runs per configuration -> data/bench_*.csv (RUNS, NS, MODELS overridable)
+	bench/run_all.sh
 
-plots: ## Phase 5: generate plots from collected CSVs
-	@echo "[TODO Phase 5] python3 analysis/plots.py"
+perf: compile ## Phase 4: perf stat per logical CPU for each model -> data/perf/
+	bench/perf_capture.sh
+
+PY_VENV := $(BUILD)/venv
+PYTHON  := $(PY_VENV)/bin/python
+
+$(PY_VENV)/.installed: analysis/requirements.txt | $(BUILD)
+	python3 -m venv $(PY_VENV)
+	$(PY_VENV)/bin/pip install -q -r $<
+	@touch $@
+
+stats: $(PY_VENV)/.installed ## Phase 5: mean, 95% CI, speedup, efficiency and convergence -> results/
+	$(PYTHON) analysis/stats.py
+
+plots: stats ## Phase 5: all figures (boxplots, histograms, scaling, SMT on/off, perf) -> results/
+	$(PYTHON) analysis/plots.py
 
 verify: compile $(BUILD)/verify_mesh ## Check every model's output mesh against the baseline (exact match)
 	BUILD=$(BUILD) ./tests/verify.sh
