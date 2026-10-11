@@ -136,7 +136,7 @@ def parse_perf_file(path):
         value = fields[1]
         if not value.replace(".", "", 1).isdigit():
             continue
-        rows.append({"cpu": int(fields[0][3:]), "event": fields[3], "value": float(value)})
+        rows.append({"cpu": int(fields[0][3:]), "event": fields[3].split(" [")[0], "value": float(value)})
     return pd.DataFrame(rows)
 
 
