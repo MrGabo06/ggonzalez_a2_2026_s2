@@ -2,11 +2,13 @@
 #
 # campaign_cgmt.sh
 #
-# Pilot measurement campaign for the CGMT execution model. Runs ./benchcgmt
-# across a grid of (N, threadCount, chunkSize) in randomized order, with one
-# warmup run before each measured repetition, and appends every repetition
-# to a CSV file. Same methodology as campaign_cmp.sh and campaign_smt.sh,
-# extended with the chunk-size dimension that CGMT needs.
+# Pilot measurement campaign for the CGMT execution model. Runs
+# build/benchcgmt across a grid of (N, threadCount, chunkSize) in randomized
+# order, with one warmup run before each measured repetition, and appends
+# every repetition to a CSV file. Same methodology as campaign_cmp.sh and
+# campaign_smt.sh, extended with the chunk-size dimension that CGMT needs.
+#
+# Assumes it is invoked from the case_2 root.
 
 set -euo pipefail
 
@@ -17,12 +19,14 @@ declare -A STEPS_FOR_N=(
     [8192]=4
 )
 REPETITIONS=200
-OUTPUT_CSV="final_cgmt.csv"
+mkdir -p results/raw
+OUTPUT_CSV="results/raw/final_cgmt.csv"
 
-# Chunk size fixed at 8: the pilot (campaign_cgmt.csv) showed it as the best
-# performing value among {1, 8, 32, 128} (lowest avg ns_per_interaction),
-# and this keeps the main campaign's grid the same shape as CMP/SMT (N x
-# threads only). Chunk sensitivity itself is a separate, smaller study.
+# Chunk size fixed at 8: the pilot (results/raw/campaign_cgmt.csv) showed it
+# as the best performing value among {1, 8, 32, 128} (lowest avg
+# ns_per_interaction), and this keeps the main campaign's grid the same
+# shape as CMP/SMT (N x threads only). Chunk sensitivity itself is a
+# separate, smaller study.
 N_VALUES=(1024 2048 4096 8192)
 THREAD_COUNTS=(1 2 4 8 16)
 CHUNK_SIZE=8
@@ -55,10 +59,10 @@ for config in "${ALL_RUNS[@]}"; do
     steps="${STEPS_FOR_N[$n]}"
 
     echo "[$COUNT/$TOTAL] N=$n threads=$threads chunk=$chunk steps=$steps - calentando..."
-    ./benchcgmt "$n" "$steps" "$threads" "$chunk" > /dev/null
+    build/benchcgmt "$n" "$steps" "$threads" "$chunk" > /dev/null
 
     echo "[$COUNT/$TOTAL] N=$n threads=$threads chunk=$chunk steps=$steps - midiendo..."
-    ./benchcgmt "$n" "$steps" "$threads" "$chunk" | tail -n 1 >> "$OUTPUT_CSV"
+    build/benchcgmt "$n" "$steps" "$threads" "$chunk" | tail -n 1 >> "$OUTPUT_CSV"
 done
 
 echo "Done. Results in $OUTPUT_CSV"

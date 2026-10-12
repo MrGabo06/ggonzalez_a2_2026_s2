@@ -6,13 +6,17 @@ Post-processing for the N-body measurement campaign. Reads the four final
 CSV files (one per execution model), computes per-configuration statistics
 (mean, 95% confidence interval via Student's t), derives speedup and
 efficiency against the sequential baseline, and produces the plots the
-project specification asks for: boxplots per N and a convergence plot of
-the confidence interval width vs. number of repetitions.
+project specification asks for: boxplots per N, speedup/efficiency
+(scalability) curves per N, and a convergence plot of the confidence
+interval width vs. number of repetitions.
 
 Usage: python3 analyze_campaign.py
-Expects final_cmp.csv, final_smt.csv, final_cgmt.csv, final_fgmt.csv in the
-current directory. Writes summary.csv and PNG plots alongside them.
+Run from the case_2 root (e.g. `make analyze`). Expects
+results/raw/final_cmp.csv, final_smt.csv, final_cgmt.csv, final_fgmt.csv.
+Writes results/raw/summary.csv and PNG plots under results/figures/.
 """
+
+import os
 
 import pandas as pd
 import numpy as np
@@ -23,11 +27,14 @@ import matplotlib.pyplot as plt
 
 COLUMNS = ["model", "n", "steps", "workers", "time_sec", "checksum", "ns_per_interaction"]
 
+RAW_DIR = "results/raw"
+FIGURES_DIR = "results/figures"
+
 FILES = {
-    "cmp": "final_cmp.csv",
-    "smt": "final_smt.csv",
-    "cgmt": "final_cgmt.csv",
-    "fgmt": "final_fgmt.csv",
+    "cmp": os.path.join(RAW_DIR, "final_cmp.csv"),
+    "smt": os.path.join(RAW_DIR, "final_smt.csv"),
+    "cgmt": os.path.join(RAW_DIR, "final_cgmt.csv"),
+    "fgmt": os.path.join(RAW_DIR, "final_fgmt.csv"),
 }
 
 
@@ -103,7 +110,52 @@ def PlotBoxplotsByN(runs):
         ax.set_title(f"Distribución de tiempos por configuración (N={n})")
         plt.xticks(rotation=90)
         plt.tight_layout()
-        plt.savefig(f"boxplot_n{n}.png", dpi=150)
+        plt.savefig(os.path.join(FIGURES_DIR, f"boxplot_n{n}.png"), dpi=150)
+        plt.close(fig)
+
+
+def PlotScalabilityByN(summary):
+    """
+    Purpose: One figure per N with two panels -- speedup vs. workers and
+             efficiency vs. workers, one line per model (sequential
+             excluded, since it is the baseline, not a point on its own
+             curve). This is the "escalabilidad en funcion del numero de
+             hilos o procesos" metric the project spec asks for
+             explicitly (section 4, metrica d), separate from the
+             per-configuration boxplots.
+    """
+    models = sorted(m for m in summary["model"].unique() if m != "sequential")
+
+    for n in sorted(summary["n"].unique()):
+        subset = summary[summary["n"] == n]
+        if subset.empty:
+            continue
+
+        fig, (axSpeedup, axEfficiency) = plt.subplots(1, 2, figsize=(11, 4.5))
+
+        maxWorkers = subset["workers"].max()
+        axSpeedup.plot([1, maxWorkers], [1, maxWorkers], "k--", linewidth=1, label="speedup ideal")
+
+        for model in models:
+            modelData = subset[subset["model"] == model].sort_values("workers")
+            if modelData.empty:
+                continue
+            axSpeedup.plot(modelData["workers"], modelData["speedup"], marker="o", label=model)
+            axEfficiency.plot(modelData["workers"], modelData["efficiency"], marker="o", label=model)
+
+        axSpeedup.set_xlabel("Hilos / fibers")
+        axSpeedup.set_ylabel("Speedup")
+        axSpeedup.set_title(f"Speedup vs. trabajadores (N={n})")
+        axSpeedup.legend(fontsize=8)
+
+        axEfficiency.axhline(1.0, color="k", linestyle="--", linewidth=1, label="eficiencia ideal")
+        axEfficiency.set_xlabel("Hilos / fibers")
+        axEfficiency.set_ylabel("Eficiencia")
+        axEfficiency.set_title(f"Eficiencia vs. trabajadores (N={n})")
+        axEfficiency.legend(fontsize=8)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(FIGURES_DIR, f"scalability_n{n}.png"), dpi=150)
         plt.close(fig)
 
 
@@ -135,20 +187,27 @@ def PlotConvergence(runs, model, n, workers):
     ax.set_ylabel("Ancho del IC 95% (ns/interacción)")
     ax.set_title(f"Convergencia del IC 95% ({model}, N={n}, workers={workers})")
     plt.tight_layout()
-    plt.savefig(f"convergence_{model}_n{n}_w{workers}.png", dpi=150)
+    plt.savefig(os.path.join(FIGURES_DIR, f"convergence_{model}_n{n}_w{workers}.png"), dpi=150)
     plt.close(fig)
 
 
 def main():
+    os.makedirs(RAW_DIR, exist_ok=True)
+    os.makedirs(FIGURES_DIR, exist_ok=True)
+
     runs = LoadAllRuns()
 
     summary = SummarizeByConfig(runs)
     summary = AddSpeedupAndEfficiency(summary)
-    summary.to_csv("summary.csv", index=False)
-    print(f"Resumen guardado en summary.csv ({len(summary)} configuraciones).")
+    summaryPath = os.path.join(RAW_DIR, "summary.csv")
+    summary.to_csv(summaryPath, index=False)
+    print(f"Resumen guardado en {summaryPath} ({len(summary)} configuraciones).")
 
     PlotBoxplotsByN(runs)
     print("Boxplots guardados (boxplot_n<N>.png).")
+
+    PlotScalabilityByN(summary)
+    print("Gráficas de escalabilidad guardadas (scalability_n<N>.png).")
 
     for model in ["cmp", "smt", "cgmt", "fgmt"]:
         PlotConvergence(runs, model, n=4096, workers=16)

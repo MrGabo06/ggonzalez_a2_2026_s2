@@ -1,19 +1,7 @@
 # Binarios compilados (se generan localmente con gcc, no se versionan)
-nbody
-bench
-benchcmp
-benchsmt
-benchcgmt
-benchfgmt
-test_cmp
-test_cgmt
-test_fgmt
-test_forces
-test_cgmt_asan
+build/
 *.o
 *.out
 
-# Datos generados por las campañas de medición (regenerables, no se versionan)
-campaign_*.csv
-final_*.csv
+# Logs de campanas en progreso (no la evidencia final, que vive en results/)
 *.log

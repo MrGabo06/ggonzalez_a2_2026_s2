@@ -2,16 +2,14 @@
 #
 # campaign_fgmt.sh
 #
-# Pilot measurement campaign for the FGMT execution model. Runs ./benchfgmt
-# across a grid of (N, fiberCount, quantumBodies) in randomized order, with
-# one warmup run before each measured repetition, and appends every
-# repetition to a CSV file. Same methodology as campaign_cmp.sh,
-# campaign_smt.sh and campaign_cgmt.sh, using fiberCount/quantumBodies in
-# place of threads/chunkSize.
+# Pilot measurement campaign for the FGMT execution model. Runs
+# build/benchfgmt across a grid of (N, fiberCount, quantumBodies) in
+# randomized order, with one warmup run before each measured repetition, and
+# appends every repetition to a CSV file. Same methodology as
+# campaign_cmp.sh, campaign_smt.sh and campaign_cgmt.sh, using
+# fiberCount/quantumBodies in place of threads/chunkSize.
 #
-# NOTE: pilot-scale grid (reduced repetitions and quantum values), same as
-# campaign_cgmt.sh. Restore REPETITIONS=20 and the full QUANTUMS list for
-# the final measurement campaign.
+# Assumes it is invoked from the case_2 root.
 
 set -euo pipefail
 
@@ -22,12 +20,13 @@ declare -A STEPS_FOR_N=(
     [8192]=4
 )
 REPETITIONS=200
-OUTPUT_CSV="final_fgmt.csv"
+mkdir -p results/raw
+OUTPUT_CSV="results/raw/final_fgmt.csv"
 
-# Quantum fixed at 64: the pilot (campaign_fgmt.csv) showed it as the best
-# performing value among {8, 64} (lowest avg ns_per_interaction, less
-# swapcontext overhead), and this keeps the main campaign's grid the same
-# shape as CMP/SMT (N x fibers only). Quantum sensitivity itself is a
+# Quantum fixed at 64: the pilot (results/raw/campaign_fgmt.csv) showed it as
+# the best performing value among {8, 64} (lowest avg ns_per_interaction,
+# less swapcontext overhead), and this keeps the main campaign's grid the
+# same shape as CMP/SMT (N x fibers only). Quantum sensitivity itself is a
 # separate, smaller study.
 N_VALUES=(1024 2048 4096 8192)
 FIBER_COUNTS=(1 2 4 8 16)
@@ -61,10 +60,10 @@ for config in "${ALL_RUNS[@]}"; do
     steps="${STEPS_FOR_N[$n]}"
 
     echo "[$COUNT/$TOTAL] N=$n fibers=$fibers quantum=$quantum steps=$steps - calentando..."
-    ./benchfgmt "$n" "$steps" "$fibers" "$quantum" > /dev/null
+    build/benchfgmt "$n" "$steps" "$fibers" "$quantum" > /dev/null
 
     echo "[$COUNT/$TOTAL] N=$n fibers=$fibers quantum=$quantum steps=$steps - midiendo..."
-    ./benchfgmt "$n" "$steps" "$fibers" "$quantum" | tail -n 1 >> "$OUTPUT_CSV"
+    build/benchfgmt "$n" "$steps" "$fibers" "$quantum" | tail -n 1 >> "$OUTPUT_CSV"
 done
 
 echo "Done. Results in $OUTPUT_CSV"
