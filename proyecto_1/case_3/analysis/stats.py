@@ -25,6 +25,7 @@ PHYSICAL_CORES = 4
 TARGET_REL_HALF_WIDTH = 0.01
 CHECKPOINTS = [10, 25, 50, 100, 150, 200, 300, 400]
 BOOTSTRAP = 2000
+BUSY_CPU_SHARE = 0.5
 
 
 def load_runs(paths=None):
@@ -150,11 +151,15 @@ def perf_tables():
         model, n, t = path.stem.rsplit("_", 2)
         meta = {"smt": path.parent.name.removeprefix("smt"), "model": model.removeprefix("model_"),
                 "N": int(n[1:]), "threads": int(t[1:])}
-        event = counts.groupby("event")["value"].sum()
+        # perf -a also counts unrelated processes; idle CPUs only add their noise.
+        cpu_cycles = counts[counts["event"] == "cycles"].set_index("cpu")["value"]
+        busy = cpu_cycles[cpu_cycles >= BUSY_CPU_SHARE * cpu_cycles.max()].index
+        event = counts[counts["cpu"].isin(busy)].groupby("event")["value"].sum()
         get = lambda name: event.get(name, np.nan)
         cycles = get("cycles")
         totals.append({
             **meta,
+            "busy_cpus": len(busy),
             "ipc": get("instructions") / cycles,
             "cache_miss_pct": 100 * get("cache-misses") / get("cache-references"),
             "llc_mpki": 1000 * get("LLC-load-misses") / get("instructions"),
@@ -164,7 +169,6 @@ def perf_tables():
             "context_switches": get("context-switches"),
             "cpu_migrations": get("cpu-migrations"),
         })
-        cpu_cycles = counts[counts["event"] == "cycles"].set_index("cpu")["value"]
         cpu_instr = counts[counts["event"] == "instructions"].set_index("cpu")["value"]
         for cpu, cyc in cpu_cycles.items():
             per_cpu.append({**meta, "cpu": cpu, "cycles": cyc,
