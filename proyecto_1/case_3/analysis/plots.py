@@ -47,11 +47,25 @@ def ns_of(frame):
     return sorted(frame["N"].unique())
 
 
+# Two panels per row keep each figure close to square, so several fit on one page.
+def panel_grid(count, width, height, **kwargs):
+    cols = min(count, 2)
+    rows = int(np.ceil(count / cols))
+    fig, axes = plt.subplots(rows, cols, figsize=(width * cols, height * rows), squeeze=False, **kwargs)
+    for ax in axes.flat[count:]:
+        ax.set_visible(False)
+    return fig, axes
+
+
+def legend_below(fig, handles, labels):
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0), ncols=len(labels))
+
+
 def boxplots(runs, smt):
     data = runs[runs["smt"] == smt]
     ns = ns_of(data)
-    fig, axes = plt.subplots(len(ns), 1, figsize=(8, 2.6 * len(ns)), squeeze=False)
-    for ax, n in zip(axes[:, 0], ns):
+    fig, axes = panel_grid(len(ns), 4.6, 2.9)
+    for ax, n in zip(axes.flat, ns):
         groups = [(label(key_row), g["time_s"].to_numpy(), key_row["model"])
                   for _, g in data[data["N"] == n].groupby(stats.CONFIG[1:], observed=True)
                   for key_row in [g.iloc[0]]]
@@ -61,9 +75,10 @@ def boxplots(runs, smt):
         for patch, (_, _, model) in zip(box["boxes"], groups):
             patch.set(facecolor=COLORS[model], alpha=0.75, edgecolor=MUTED)
         ax.set_title(f"N={n} (steps={data[data['N'] == n]['steps'].iloc[0]})", loc="left")
+        ax.tick_params(axis="x", rotation=40, labelsize=7)
+        plt.setp(ax.get_xticklabels(), ha="right", rotation_mode="anchor")
+    for ax in axes[:, 0]:
         ax.set_ylabel("time (s)")
-        ax.tick_params(axis="x", rotation=30)
-    fig.suptitle(f"Run-time distribution per configuration, SMT {smt}", x=0.01, ha="left")
     fig.tight_layout()
     save(fig, f"boxplot_smt{smt}")
 
@@ -91,8 +106,8 @@ def histograms(runs, smt):
 def scaling(summary, smt, metric, ylabel, name, reference=None):
     data = summary[summary["smt"] == smt]
     ns = ns_of(data)
-    fig, axes = plt.subplots(1, len(ns), figsize=(3.2 * len(ns), 3.2), sharey=True, squeeze=False)
-    for ax, n in zip(axes[0], ns):
+    fig, axes = panel_grid(len(ns), 3.2, 2.6, sharey=True)
+    for ax, n in zip(axes.flat, ns):
         block = data[data["N"] == n]
         for model in stats.MODEL_ORDER:
             series = block[block["model"] == model].sort_values("threads")
@@ -107,12 +122,13 @@ def scaling(summary, smt, metric, ylabel, name, reference=None):
         if reference is not None:
             ax.axhline(reference, color=MUTED, linewidth=1, linestyle="--")
         ax.set_title(f"N={n}", loc="left")
-        ax.set_xlabel("threads")
         ax.set_xticks([1, 2, 4, 8])
-    axes[0, 0].set_ylabel(ylabel)
-    axes[0, -1].legend(loc="upper left", bbox_to_anchor=(1, 1))
-    fig.suptitle(f"{name.capitalize()} by thread count, SMT {smt}", x=0.01, ha="left")
+    for ax in axes[-1]:
+        ax.set_xlabel("threads")
+    for ax in axes[:, 0]:
+        ax.set_ylabel(ylabel)
     fig.tight_layout()
+    legend_below(fig, *axes[0, 0].get_legend_handles_labels())
     save(fig, f"{name}_smt{smt}")
 
 
@@ -122,8 +138,8 @@ def smt_on_off(summary):
         print("skip smt_on_off: needs bench CSVs with SMT on and off")
         return
     ns = ns_of(data)
-    fig, axes = plt.subplots(1, len(ns), figsize=(3.2 * len(ns), 3.2), squeeze=False)
-    for ax, n in zip(axes[0], ns):
+    fig, axes = panel_grid(len(ns), 3.2, 2.9)
+    for ax, n in zip(axes.flat, ns):
         block = data[data["N"] == n]
         configs = block[["model", "threads"]].drop_duplicates().sort_values(["model", "threads"])
         x = np.arange(len(configs))
@@ -132,31 +148,33 @@ def smt_on_off(summary):
             err = [vals["mean_s"] - vals["ci_low_s"], vals["ci_high_s"] - vals["mean_s"]]
             ax.bar(x + offset, vals["mean_s"], width=0.38, color=SMT_STATE[state], yerr=err,
                    capsize=2, edgecolor="white", linewidth=1, label=f"SMT {state}")
-        ax.set_xticks(x, [f"{m} T={t}" for m, t in zip(configs["model"], configs["threads"])], rotation=40)
+        ax.set_xticks(x, [f"{m} T={t}" for m, t in zip(configs["model"], configs["threads"])],
+                      rotation=40, ha="right", rotation_mode="anchor")
         ax.set_title(f"N={n}", loc="left")
-    axes[0, 0].set_ylabel("mean time (s), 95% CI")
-    axes[0, -1].legend(loc="upper left", bbox_to_anchor=(1, 1))
-    fig.suptitle("Hyper-Threading on vs off (BIOS)", x=0.01, ha="left")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("mean time (s), 95% CI")
     fig.tight_layout()
+    legend_below(fig, *axes[0, 0].get_legend_handles_labels())
     save(fig, "smt_on_off")
 
 
 def convergence_plot(conv):
     ns = ns_of(conv)
-    fig, axes = plt.subplots(1, len(ns), figsize=(3.2 * len(ns), 3.2), sharey=True, squeeze=False)
-    for ax, n in zip(axes[0], ns):
+    fig, axes = panel_grid(len(ns), 3.2, 2.6, sharey=True)
+    for ax, n in zip(axes.flat, ns):
         for key, g in conv[conv["N"] == n].groupby(stats.CONFIG, observed=True):
             ax.plot(g["n"], g["ci_half_pct"], color=COLORS[key[1]], marker=MARKERS[key[1]],
                     markersize=4, linewidth=1.2, alpha=0.8)
         ax.axhline(100 * stats.TARGET_REL_HALF_WIDTH, color=MUTED, linestyle="--", linewidth=1)
         ax.set_xscale("log")
         ax.set_title(f"N={n}", loc="left")
+    for ax in axes[-1]:
         ax.set_xlabel("runs (n)")
-    axes[0, 0].set_ylabel("95% CI half-width (% of mean)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("95% CI half-width (%)")
     handles = [plt.Line2D([], [], color=COLORS[m], marker=MARKERS[m], label=m) for m in stats.MODEL_ORDER]
-    axes[0, -1].legend(handles=handles, loc="upper left", bbox_to_anchor=(1, 1))
-    fig.suptitle("Convergence of the 95% CI with the number of runs (dashed = ±1%)", x=0.01, ha="left")
     fig.tight_layout()
+    legend_below(fig, handles, stats.MODEL_ORDER)
     save(fig, "convergence")
 
 
@@ -175,13 +193,12 @@ def perf_plots():
             names = [f"{m} T={t}" for m, t in zip(sub["model"], sub["threads"])]
             colors = [COLORS[m] for m in sub["model"]]
             row[0].bar(names, sub["ipc"], color=colors, edgecolor="white", linewidth=1)
-            row[0].set_ylabel("IPC (system-wide)")
+            row[0].set_ylabel("IPC per busy logical CPU")
             row[1].bar(names, sub["stalls_l3_miss_pct"], color=colors, edgecolor="white", linewidth=1)
             row[1].set_ylabel("cycles stalled on L3 miss (%)")
             for ax in row:
                 ax.set_title(f"N={n}", loc="left")
                 ax.tick_params(axis="x", rotation=40)
-        fig.suptitle(f"perf counters, SMT {smt}", x=0.01, ha="left")
         fig.tight_layout()
         save(fig, f"perf_smt{smt}")
 
