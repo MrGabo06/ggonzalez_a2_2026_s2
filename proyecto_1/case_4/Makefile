@@ -21,8 +21,9 @@ RESULTS     := results
 HT_MODE    := $(shell HT="$(HT)" python3 scripts/ht_mode.py 2>/dev/null || echo on)
 RESULTS_HT := $(RESULTS)/ht_$(HT_MODE)
 
-# Opciones extra de bench.py en `make bench-oficial`. Vacio por defecto: se mide en silencio
-# (imprimir cada corrida mientras se mide sesga los tiempos). El detalle de cada corrida sale al final.
+# Opciones extra de bench.py en `make bench-oficial` y `make bench-defensa`. Vacio por defecto:
+# se mide en silencio (imprimir cada corrida mientras se mide sesga los tiempos).
+# El detalle de cada corrida sale al final.
 BENCH_OPTS ?=
 
 COMMON_SRC := $(wildcard $(SRC_DIR)/*.cpp)
@@ -39,7 +40,7 @@ BINARIES   := $(patsubst $(ENGINES_DIR)/%.cpp,$(BUILD)/%,$(ENGINE_SRC))
 # Targets
 # =================================================
 
-.PHONY: all help build clean distclean clean-images ht-mode bench bench-oficial bench-vivo analyze compare-ht run perf perf-report
+.PHONY: all help build clean distclean clean-images ht-mode bench bench-oficial bench-defensa bench-vivo analyze compare-ht run perf perf-report
 
 # Sin esto, make trata build/*.o como archivos "intermedios" y los borra
 # apenas termina de enlazar. .SECONDARY los conserva para no recompilar
@@ -84,6 +85,12 @@ bench: $(BENCH_BINARIES) ## Corre scripts/bench.py (prueba corta, 5 corridas). I
 
 bench-oficial: $(BENCH_BINARIES) ## Corre scripts/bench.py con 200 corridas -> results/ht_<on|off>/benchmark/bench_oficial.csv
 	python3 scripts/bench.py --runs 200 $(BENCH_OPTS) --out bench_oficial.csv
+
+# Corrida corta para la defensa: 20 corridas por configuracion, CSV aparte (no pisa bench_oficial.csv)
+# y genera las graficas al terminar. Con IC mas ancho que las 200 corridas oficiales: es para mostrar.
+bench-defensa: $(BENCH_BINARIES) ## Corrida de defensa: 20 corridas + graficas -> results/ht_<on|off>/benchmark/bench_defensa*
+	python3 scripts/bench.py --runs 20 $(BENCH_OPTS) --out bench_defensa.csv
+	python3 scripts/analyze.py $(RESULTS_HT)/benchmark/bench_defensa.csv
 
 # Solo para ver las corridas en vivo (demo): sesga los tiempos, NO usar para datos oficiales.
 bench-vivo: $(BENCH_BINARIES) ## Corre bench.py mostrando cada corrida en vivo (solo para ver) -> prueba_vivo.csv
