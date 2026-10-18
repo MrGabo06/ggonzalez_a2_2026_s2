@@ -1,0 +1,49 @@
+# coarseGrained | 2026-10-10T17:29:26-06:00 | 7.0.0-31-generic | modo: -a -A | HT: on
+# comando (repetido 20 veces): ./build/coarseGrained 800 600 12 4 4
+# eventos: cycles,instructions,cycle_activity.stalls_total,cpu_clk_unhalted.one_thread_active,cache-misses
+
+ Performance counter stats for 'system wide':
+
+CPU0        5.110.837.779      cycles                                                                
+CPU1           66.471.127      cycles                                                                
+CPU2           39.968.301      cycles                                                                
+CPU3           96.582.104      cycles                                                                
+CPU4           77.913.198      cycles                                                                
+CPU5          103.479.483      cycles                                                                
+CPU6          111.019.506      cycles                                                                
+CPU7           88.279.785      cycles                                                                
+CPU0       15.058.844.033      instructions                                                          
+CPU1           36.378.876      instructions                                                          
+CPU2           18.651.055      instructions                                                          
+CPU3           62.916.703      instructions                                                          
+CPU4           49.870.012      instructions                                                          
+CPU5           81.746.371      instructions                                                          
+CPU6          123.231.903      instructions                                                          
+CPU7           53.977.580      instructions                                                          
+CPU0          493.082.560      cycle_activity.stalls_total                                           
+CPU1           44.788.427      cycle_activity.stalls_total                                           
+CPU2           28.656.375      cycle_activity.stalls_total                                           
+CPU3           64.421.574      cycle_activity.stalls_total                                           
+CPU4           49.849.854      cycle_activity.stalls_total                                           
+CPU5           63.097.383      cycle_activity.stalls_total                                           
+CPU6           59.515.755      cycle_activity.stalls_total                                           
+CPU7           59.737.589      cycle_activity.stalls_total                                           
+CPU0           42.306.527      cpu_clk_unhalted.one_thread_active                                      
+CPU1            1.105.664      cpu_clk_unhalted.one_thread_active                                      
+CPU2              522.410      cpu_clk_unhalted.one_thread_active                                      
+CPU3            1.015.880      cpu_clk_unhalted.one_thread_active                                      
+CPU4               63.760      cpu_clk_unhalted.one_thread_active                                      
+CPU5            1.048.073      cpu_clk_unhalted.one_thread_active                                      
+CPU6            1.531.156      cpu_clk_unhalted.one_thread_active                                      
+CPU7            1.018.064      cpu_clk_unhalted.one_thread_active                                      
+CPU0              403.380      cache-misses                                                          
+CPU1              239.988      cache-misses                                                          
+CPU2              144.710      cache-misses                                                          
+CPU3              545.925      cache-misses                                                          
+CPU4              308.090      cache-misses                                                          
+CPU5              502.049      cache-misses                                                          
+CPU6              677.832      cache-misses                                                          
+CPU7              426.272      cache-misses                                                          
+
+       1,147495892 seconds time elapsed
+

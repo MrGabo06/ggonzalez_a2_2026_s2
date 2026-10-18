@@ -1,0 +1,7 @@
+build/
+__pycache__/
+
+# resultados: se versionan los CSV, PNG y capturas de perf
+# pero no las imagenes BMP (se regeneran con make run) ni las pruebas sueltas
+results/ht_*/imagenes_raytracing/*.bmp
+results/ht_*/benchmark/prueba_*

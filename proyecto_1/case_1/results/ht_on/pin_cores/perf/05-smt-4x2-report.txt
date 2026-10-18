@@ -1,0 +1,143 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 682  of event 'cycles:P'
+# Event count (approx.): 438950558
+#
+# Children      Self  Command  Shared Object         Symbol                              
+# ........  ........  .......  ....................  ....................................
+#
+    90.49%    90.46%  smt      smt                   [.] mat_block_partial
+            |
+            ---mat_block_partial
+
+     5.85%     5.69%  smt      libc.so.6             [.] random
+            |          
+             --5.54%--random
+
+     1.54%     0.63%  smt      smt                   [.] mat_init_random
+            |
+            ---mat_init_random
+
+     1.06%     0.00%  smt      [kernel.kallsyms]     [k] asm_exc_page_fault
+            |
+            ---asm_exc_page_fault
+               |          
+                --0.75%--exc_page_fault
+                          do_user_addr_fault
+                          |          
+                           --0.59%--handle_mm_fault
+                                     __handle_mm_fault
+
+     0.75%     0.00%  smt      [kernel.kallsyms]     [k] exc_page_fault
+            |
+            ---exc_page_fault
+               do_user_addr_fault
+               |          
+                --0.59%--handle_mm_fault
+                          __handle_mm_fault
+
+     0.75%     0.16%  smt      [kernel.kallsyms]     [k] do_user_addr_fault
+            |          
+             --0.59%--do_user_addr_fault
+                       handle_mm_fault
+                       __handle_mm_fault
+
+     0.63%     0.00%  smt      libc.so.6             [.] 0x00007f9494240353
+            |
+            ---0x7f9494240353
+               asm_exc_page_fault
+
+     0.62%     0.16%  smt      libc.so.6             [.] rand
+     0.59%     0.00%  smt      [kernel.kallsyms]     [k] handle_mm_fault
+            |
+            ---handle_mm_fault
+               __handle_mm_fault
+
+     0.59%     0.00%  smt      [kernel.kallsyms]     [k] __handle_mm_fault
+            |
+            ---__handle_mm_fault
+
+     0.47%     0.00%  smt      [kernel.kallsyms]     [k] do_anonymous_page
+     0.45%     0.45%  smt      libc.so.6             [.] random_r
+     0.45%     0.00%  smt      [kernel.kallsyms]     [k] entry_SYSCALL_64_after_hwframe
+     0.45%     0.00%  smt      [kernel.kallsyms]     [k] do_syscall_64
+     0.44%     0.44%  smt      [kernel.kallsyms]     [k] native_irq_return_iret
+     0.32%     0.32%  smt      libc.so.6             [.] 0x0000000000173353
+     0.32%     0.32%  smt      smt                   [.] mat_checksum
+     0.32%     0.32%  smt      [kernel.kallsyms]     [k] __list_del_entry_valid_or_report
+     0.32%     0.00%  smt      [kernel.kallsyms]     [k] vma_alloc_folio_noprof
+     0.32%     0.00%  smt      [kernel.kallsyms]     [k] folio_alloc_mpol_noprof
+     0.32%     0.00%  smt      [kernel.kallsyms]     [k] alloc_pages_mpol_noprof
+     0.32%     0.00%  smt      [kernel.kallsyms]     [k] __alloc_pages_noprof
+     0.32%     0.00%  smt      [kernel.kallsyms]     [k] get_page_from_freelist
+     0.32%     0.00%  smt      [kernel.kallsyms]     [k] __rmqueue_pcplist
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] asm_sysvec_apic_timer_interrupt
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] sysvec_apic_timer_interrupt
+     0.16%     0.16%  smt      [kernel.kallsyms]     [k] rb_erase
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] __irq_exit_rcu
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] handle_softirqs
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] tmigr_handle_remote
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] timerqueue_del
+     0.16%     0.16%  smt      [kernel.kallsyms]     [k] __rcu_read_lock
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] __mem_cgroup_charge
+     0.16%     0.16%  smt      [kernel.kallsyms]     [k] x64_sys_call
+     0.16%     0.00%  smt      [unknown]             [k] 0000000000000000
+     0.16%     0.00%  smt      libc.so.6             [.] pthread_setaffinity_np
+     0.16%     0.16%  smt      [kernel.kallsyms]     [k] free_unref_folios
+     0.16%     0.00%  smt      libc.so.6             [.] __munmap
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_munmap
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] __vm_munmap
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] do_vmi_munmap
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] do_vmi_align_munmap
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] vms_complete_munmap_vmas
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] vms_clear_ptes
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] tlb_finish_mmu
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] __tlb_batch_free_encoded_pages
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] free_pages_and_swap_cache
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] folios_put_refs
+     0.16%     0.00%  smt      [kernel.kallsyms]     [k] free_unref_page_commit
+     0.15%     0.15%  smt      smt                   [.] rand@plt
+     0.13%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f94942fc2c8
+     0.13%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f94942fbc8f
+     0.12%     0.09%  smt      [kernel.kallsyms]     [k] set_pte_range
+     0.12%     0.00%  smt      [kernel.kallsyms]     [k] do_fault
+     0.12%     0.00%  smt      [kernel.kallsyms]     [k] filemap_map_pages
+     0.09%     0.00%  smt      [kernel.kallsyms]     [k] vm_mmap_pgoff
+     0.09%     0.00%  smt      [kernel.kallsyms]     [k] do_mmap
+     0.09%     0.00%  smt      libc.so.6             [.] __sysconf
+     0.07%     0.07%  smt      [kernel.kallsyms]     [k] mas_data_end
+     0.07%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f9494302012
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] __get_unmapped_area
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] arch_get_unmapped_area_topdown
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] vm_unmapped_area
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] mas_empty_area_rev
+     0.04%     0.04%  smt      [kernel.kallsyms]     [k] filename_lookup
+     0.04%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f9494301c37
+     0.04%     0.00%  smt      [kernel.kallsyms]     [k] do_faccessat
+     0.04%     0.00%  smt      [kernel.kallsyms]     [k] user_path_at
+     0.03%     0.03%  smt      [kernel.kallsyms]     [k] down_write
+     0.03%     0.00%  smt      [unknown]             [k] 0x00007fdd442e9b57
+     0.03%     0.03%  smt      [kernel.kallsyms]     [k] folio_add_file_rmap_ptes
+     0.03%     0.00%  smt      [unknown]             [k] 0x7370616377682e75
+     0.03%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f94942f285c
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_execve
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] do_execveat_common.isra.0
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] bprm_execve
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] load_elf_binary
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] elf_load
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] __mmap_region
+     0.03%     0.03%  smt      [kernel.kallsyms]     [k] idle_cpu
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] __sysvec_apic_timer_interrupt
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] hrtimer_interrupt
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] __hrtimer_run_queues
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] tick_nohz_handler
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] update_process_times
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] sched_tick
+
+
+#
+# (Tip: For tracepoint events, try: perf report -s trace_fields)
+#

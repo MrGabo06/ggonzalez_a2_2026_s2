@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.033751419,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.035653091,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.034641147,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.037094174,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.038004901,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.039037995,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.039959215,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.035283778,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.036281466,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,4,0.035633915,334737756981.249573
+
+ Performance counter stats for 'build/smt 512 64 4 1 42 cores' (10 runs):
+
+            146,33 msec task-clock                       #    2,863 CPUs utilized               ( +-  0,10% )
+       408 350 413      cycles                           #    2,791 GHz                         ( +-  0,10% )
+     1 006 116 350      instructions                     #    2,46  insn per cycle              ( +-  0,05% )
+         1 399 892      cache-references                 #    9,567 M/sec                       ( +-  0,72% )
+           241 486      cache-misses                     #   17,25% of all cache refs           ( +-  3,42% )
+                36      context-switches                 #  246,027 /sec                        ( +-  5,83% )
+                 2      cpu-migrations                   #   13,668 /sec                        ( +- 22,67% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+          0,051112 +- 0,000600 seconds time elapsed  ( +-  1,17% )
+

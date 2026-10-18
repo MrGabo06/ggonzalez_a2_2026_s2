@@ -1,0 +1,191 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:P'
+# Event count (approx.): 665236230
+#
+# Children      Self  Command  Shared Object         Symbol                              
+# ........  ........  .......  ....................  ....................................
+#
+    92.72%    92.72%  smt      smt                   [.] mat_block_partial
+            |
+            ---mat_block_partial
+
+     4.01%     3.80%  smt      libc.so.6             [.] random
+            |          
+             --3.92%--random
+
+     1.18%     0.50%  smt      smt                   [.] mat_init_random
+            |          
+             --1.08%--mat_init_random
+                       |          
+                        --0.59%--asm_exc_page_fault
+
+     1.18%     0.00%  smt      [kernel.kallsyms]     [k] asm_exc_page_fault
+            |
+            ---asm_exc_page_fault
+               |          
+                --0.87%--exc_page_fault
+                          do_user_addr_fault
+                          handle_mm_fault
+                          __handle_mm_fault
+                          |          
+                           --0.69%--do_anonymous_page
+
+     0.87%     0.00%  smt      [kernel.kallsyms]     [k] exc_page_fault
+            |
+            ---exc_page_fault
+               do_user_addr_fault
+               handle_mm_fault
+               __handle_mm_fault
+               |          
+                --0.69%--do_anonymous_page
+
+     0.87%     0.00%  smt      [kernel.kallsyms]     [k] do_user_addr_fault
+            |
+            ---do_user_addr_fault
+               handle_mm_fault
+               __handle_mm_fault
+               |          
+                --0.69%--do_anonymous_page
+
+     0.87%     0.00%  smt      [kernel.kallsyms]     [k] handle_mm_fault
+            |
+            ---handle_mm_fault
+               __handle_mm_fault
+               |          
+                --0.69%--do_anonymous_page
+
+     0.87%     0.00%  smt      [kernel.kallsyms]     [k] __handle_mm_fault
+            |
+            ---__handle_mm_fault
+               |          
+                --0.69%--do_anonymous_page
+
+     0.69%     0.10%  smt      [kernel.kallsyms]     [k] do_anonymous_page
+            |          
+             --0.59%--do_anonymous_page
+
+     0.61%     0.61%  smt      libc.so.6             [.] random_r
+            |          
+             --0.51%--random_r
+
+     0.58%     0.00%  smt      [kernel.kallsyms]     [k] entry_SYSCALL_64_after_hwframe
+            |
+            ---entry_SYSCALL_64_after_hwframe
+               do_syscall_64
+
+     0.58%     0.00%  smt      [kernel.kallsyms]     [k] do_syscall_64
+            |
+            ---do_syscall_64
+
+     0.42%     0.00%  smt      [unknown]             [k] 0x00007f180c35f010
+     0.42%     0.00%  smt      libc.so.6             [.] 0x00007f180c8d7353
+     0.39%     0.20%  smt      libc.so.6             [.] rand
+     0.24%     0.00%  smt      libc.so.6             [.] __munmap
+     0.24%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_munmap
+     0.24%     0.00%  smt      [kernel.kallsyms]     [k] __vm_munmap
+     0.24%     0.00%  smt      [kernel.kallsyms]     [k] do_vmi_munmap
+     0.24%     0.00%  smt      [kernel.kallsyms]     [k] do_vmi_align_munmap
+     0.24%     0.00%  smt      [kernel.kallsyms]     [k] vms_complete_munmap_vmas
+     0.22%     0.22%  smt      smt                   [.] mat_checksum
+     0.22%     0.00%  smt      [unknown]             [.] 0x0000000000000151
+     0.22%     0.00%  smt      [kernel.kallsyms]     [k] vms_clear_ptes
+     0.21%     0.21%  smt      libc.so.6             [.] 0x0000000000173353
+     0.21%     0.10%  smt      [kernel.kallsyms]     [k] kmem_cache_alloc_node_noprof
+     0.21%     0.00%  smt      libc.so.6             [.] 0x00007f180c874529
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] __do_sys_clone3
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] kernel_clone
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] copy_process
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] perf_event_init_task
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] inherit_task_group.isra.0
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] inherit_event.isra.0
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] perf_event_alloc
+     0.20%     0.10%  smt      smt                   [.] rand@plt
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] vma_alloc_folio_noprof
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] folio_alloc_mpol_noprof
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] alloc_pages_mpol_noprof
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] __alloc_pages_noprof
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] get_page_from_freelist
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] do_fault
+     0.18%     0.00%  smt      [kernel.kallsyms]     [k] filemap_map_pages
+     0.17%     0.17%  smt      [kernel.kallsyms]     [k] unmap_page_range
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] tlb_finish_mmu
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] __tlb_batch_free_encoded_pages
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] free_pages_and_swap_cache
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] folios_put_refs
+     0.11%     0.11%  smt      [kernel.kallsyms]     [k] next_uptodate_folio
+     0.10%     0.00%  smt      libc.so.6             [.] __madvise
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_madvise
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] do_madvise
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] zap_page_range_single
+     0.10%     0.10%  smt      [kernel.kallsyms]     [k] lru_gen_add_folio
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] __folio_batch_add_and_move
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] folio_batch_move_lru
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] lru_add
+     0.10%     0.10%  smt      [kernel.kallsyms]     [k] __mod_zone_page_state
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] __rmqueue_pcplist
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] its_return_thunk
+     0.10%     0.10%  smt      [kernel.kallsyms]     [k] __mod_node_page_state
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] folio_add_new_anon_rmap
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] __folio_mod_stat
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] __lruvec_stat_mod_folio
+     0.10%     0.10%  smt      [kernel.kallsyms]     [k] memset_orig
+     0.10%     0.00%  smt      [unknown]             [k] 0x0000559bd69e4980
+     0.10%     0.00%  smt      [unknown]             [k] 0x0000559bd69e4ce0
+     0.10%     0.10%  smt      [kernel.kallsyms]     [k] sync_regs
+     0.10%     0.10%  smt      [kernel.kallsyms]     [k] __pte_offset_map_lock
+     0.10%     0.10%  smt      [kernel.kallsyms]     [k] get_mem_cgroup_from_mm
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] __mem_cgroup_charge
+     0.09%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f180c9932c8
+     0.08%     0.08%  smt      [kernel.kallsyms]     [k] __list_del_entry_valid_or_report
+     0.08%     0.00%  smt      [kernel.kallsyms]     [k] free_unref_folios
+     0.08%     0.00%  smt      [kernel.kallsyms]     [k] free_unref_page_commit
+     0.08%     0.00%  smt      [kernel.kallsyms]     [k] free_pcppages_bulk
+     0.08%     0.08%  smt      [kernel.kallsyms]     [k] clear_page_erms
+     0.08%     0.00%  smt      [kernel.kallsyms]     [k] prep_new_page
+     0.07%     0.07%  smt      [kernel.kallsyms]     [k] __mod_memcg_lruvec_state
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] __page_cache_release.part.0
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] lru_gen_del_folio.constprop.0
+     0.07%     0.00%  smt      [unknown]             [k] 0x3436003231350074
+     0.07%     0.00%  smt      [unknown]             [k] 0x00007ffce5e62cff
+     0.07%     0.00%  smt      libc.so.6             [.] __isoc23_strtol
+     0.07%     0.07%  smt      [kernel.kallsyms]     [k] shmem_mapping
+     0.07%     0.00%  smt      libc.so.6             [.] _exit
+     0.06%     0.00%  smt      [unknown]             [k] 0x0000000000201002
+     0.06%     0.00%  smt      [kernel.kallsyms]     [k] unmap_vmas
+     0.06%     0.06%  smt      ld-linux-x86-64.so.2  [.] 0x000000000000efac
+     0.06%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f180c992c8f
+     0.06%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f180c9870b9
+     0.06%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f180c984fb0
+     0.04%     0.00%  smt      [unknown]             [k] 0000000000000000
+     0.04%     0.00%  smt      [unknown]             [k] 0x00007f180c9adbc8
+     0.04%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f180c97f800
+     0.04%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f180c98b064
+     0.04%     0.00%  smt      [unknown]             [k] 0x00007fb949ee9b57
+     0.04%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_execve
+     0.04%     0.00%  smt      [kernel.kallsyms]     [k] do_execveat_common.isra.0
+     0.04%     0.00%  smt      [kernel.kallsyms]     [k] bprm_execve
+     0.04%     0.00%  smt      [kernel.kallsyms]     [k] load_elf_binary
+     0.03%     0.03%  smt      ld-linux-x86-64.so.2  [.] 0x0000000000021f30
+     0.03%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007f180c997f35
+     0.02%     0.02%  smt      [kernel.kallsyms]     [k] __call_rcu_common
+     0.02%     0.00%  smt      [unknown]             [k] 0x00007f180c9acb20
+     0.02%     0.00%  smt      [unknown]             [k] 0x00007f180a95a980
+     0.02%     0.00%  smt      [unknown]             [k] 0x00007f180a159980
+     0.02%     0.00%  smt      [unknown]             [k] 0x00007f1809958980
+     0.02%     0.00%  smt      [unknown]             [k] 0x00007f1809157980
+     0.02%     0.02%  smt      [kernel.kallsyms]     [k] khugepaged_enter_vma
+     0.02%     0.02%  smt      [kernel.kallsyms]     [k] crng_make_state
+     0.02%     0.00%  smt      [kernel.kallsyms]     [k] elf_load
+     0.02%     0.00%  smt      [kernel.kallsyms]     [k] vm_mmap_pgoff
+     0.02%     0.00%  smt      [kernel.kallsyms]     [k] do_mmap
+     0.02%     0.00%  smt      [kernel.kallsyms]     [k] __mmap_region
+     0.02%     0.00%  smt      [kernel.kallsyms]     [k] _get_random_bytes
+
+
+#
+# (Tip: To trace only single function with Processor Trace use perf record --filter 'filter func @ program' -e intel_pt//u ./program ; perf script --insn-trace)
+#

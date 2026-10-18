@@ -1,0 +1,153 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 650  of event 'cycles:P'
+# Event count (approx.): 411703267
+#
+# Children      Self  Command  Shared Object         Symbol                              
+# ........  ........  .......  ....................  ....................................
+#
+    90.03%    89.87%  smt      smt                   [.] mat_block_partial
+            |
+            ---mat_block_partial
+
+     6.10%     5.60%  smt      libc.so.6             [.] random
+            |          
+             --5.60%--random
+
+     1.49%     0.83%  smt      smt                   [.] mat_init_random
+            |
+            ---mat_init_random
+               |          
+                --0.66%--asm_exc_page_fault
+
+     1.42%     1.09%  smt      libc.so.6             [.] random_r
+            |          
+             --1.09%--random_r
+
+     1.26%     0.00%  smt      [kernel.kallsyms]     [k] asm_exc_page_fault
+            |
+            ---asm_exc_page_fault
+               |          
+                --0.50%--exc_page_fault
+                          do_user_addr_fault
+
+     0.59%     0.00%  smt      [kernel.kallsyms]     [k] entry_SYSCALL_64_after_hwframe
+            |
+            ---entry_SYSCALL_64_after_hwframe
+               do_syscall_64
+
+     0.59%     0.00%  smt      [kernel.kallsyms]     [k] do_syscall_64
+            |
+            ---do_syscall_64
+
+     0.51%     0.00%  smt      [unknown]             [.] 0x00007fae6d968010
+            |
+            ---0x7fae6d968010
+               0x7fae6dee0353
+               asm_exc_page_fault
+
+     0.51%     0.00%  smt      libc.so.6             [.] 0x00007fae6dee0353
+            |
+            ---0x7fae6dee0353
+               asm_exc_page_fault
+
+     0.50%     0.00%  smt      [kernel.kallsyms]     [k] exc_page_fault
+            |
+            ---exc_page_fault
+               do_user_addr_fault
+
+     0.50%     0.00%  smt      [kernel.kallsyms]     [k] do_user_addr_fault
+            |
+            ---do_user_addr_fault
+
+     0.36%     0.36%  smt      smt                   [.] mat_checksum
+     0.36%     0.00%  smt      [unknown]             [.] 0x0000000000000151
+     0.34%     0.34%  smt      libc.so.6             [.] 0x0000000000173353
+     0.33%     0.00%  smt      [kernel.kallsyms]     [k] handle_mm_fault
+     0.33%     0.00%  smt      [kernel.kallsyms]     [k] __handle_mm_fault
+     0.33%     0.17%  smt      libc.so.6             [.] rand
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] asm_sysvec_apic_timer_interrupt
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] sysvec_apic_timer_interrupt
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] __sysvec_apic_timer_interrupt
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] hrtimer_interrupt
+     0.21%     0.00%  smt      [kernel.kallsyms]     [k] __hrtimer_run_queues
+     0.17%     0.17%  smt      [kernel.kallsyms]     [k] do_madvise
+     0.17%     0.00%  smt      libc.so.6             [.] __madvise
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_madvise
+     0.17%     0.17%  smt      [kernel.kallsyms]     [k] __pte_offset_map_lock
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] do_anonymous_page
+     0.17%     0.17%  smt      [kernel.kallsyms]     [k] native_queued_spin_lock_slowpath
+     0.17%     0.00%  smt      [unknown]             [k] 0000000000000000
+     0.17%     0.00%  smt      libc.so.6             [.] pthread_setaffinity_np
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_sched_setaffinity
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] sched_setaffinity
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] __sched_setaffinity
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] __set_cpus_allowed_ptr
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] task_rq_lock
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] _raw_spin_lock
+     0.17%     0.17%  smt      [kernel.kallsyms]     [k] sync_regs
+     0.17%     0.17%  smt      [kernel.kallsyms]     [k] access_error
+     0.17%     0.17%  smt      [kernel.kallsyms]     [k] pte_offset_map_nolock
+     0.17%     0.17%  smt      [kernel.kallsyms]     [k] update_load_avg
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] tick_nohz_handler
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] update_process_times
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] sched_tick
+     0.17%     0.00%  smt      [kernel.kallsyms]     [k] task_tick_fair
+     0.16%     0.16%  smt      [kernel.kallsyms]     [k] native_irq_return_iret
+     0.15%     0.00%  smt      libc.so.6             [.] __munmap
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_munmap
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] __vm_munmap
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] do_vmi_munmap
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] do_vmi_align_munmap
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] vms_complete_munmap_vmas
+     0.15%     0.00%  smt      [kernel.kallsyms]     [k] vms_clear_ptes
+     0.12%     0.12%  smt      [kernel.kallsyms]     [k] unmap_page_range
+     0.12%     0.00%  smt      [unknown]             [k] 0x0000000000201002
+     0.12%     0.00%  smt      [kernel.kallsyms]     [k] unmap_vmas
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] vm_mmap_pgoff
+     0.10%     0.00%  smt      [kernel.kallsyms]     [k] do_mmap
+     0.09%     0.09%  smt      libc.so.6             [.] 0x00000000000bb766
+     0.09%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007fae6df9c2c8
+     0.09%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007fae6df9bc8f
+     0.09%     0.00%  smt      libc.so.6             [.] __sysconf
+     0.07%     0.07%  smt      [kernel.kallsyms]     [k] mas_find
+     0.07%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007fae6dfa2012
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] __get_unmapped_area
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] arch_get_unmapped_area_topdown
+     0.07%     0.00%  smt      [kernel.kallsyms]     [k] vm_unmapped_area
+     0.05%     0.05%  smt      [kernel.kallsyms]     [k] _raw_spin_lock_irqsave
+     0.05%     0.00%  smt      [unknown]             [k] 0x5f4342494c470036
+     0.05%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007fae6dfa3740
+     0.05%     0.00%  smt      [kernel.kallsyms]     [k] timerfd_tmrproc
+     0.05%     0.00%  smt      [kernel.kallsyms]     [k] __wake_up_common
+     0.05%     0.00%  smt      [kernel.kallsyms]     [k] pollwake
+     0.05%     0.00%  smt      [kernel.kallsyms]     [k] try_to_wake_up
+     0.03%     0.03%  smt      [kernel.kallsyms]     [k] smp_call_function_many_cond
+     0.03%     0.00%  smt      [unknown]             [k] 0x00007fae6af61980
+     0.03%     0.00%  smt      [unknown]             [k] 0x00007fae6dfb5b20
+     0.03%     0.00%  smt      [unknown]             [k] 0x00007fae6c764980
+     0.03%     0.00%  smt      [unknown]             [k] 0x00007fae6bf63980
+     0.03%     0.00%  smt      [unknown]             [k] 0x00007fae6b762980
+     0.03%     0.03%  smt      [kernel.kallsyms]     [k] __kmalloc_cache_noprof
+     0.03%     0.00%  smt      [unknown]             [k] 0x00007f15494e9b57
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] __x64_sys_execve
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] do_execveat_common.isra.0
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] bprm_execve
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] load_elf_binary
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] elf_load
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] tlb_finish_mmu
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] __mmap_region
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] flush_tlb_mm_range
+     0.03%     0.03%  smt      ld-linux-x86-64.so.2  [.] 0x00000000000137ea
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] on_each_cpu_cond_mask
+     0.03%     0.00%  smt      [kernel.kallsyms]     [k] perf_event_mmap
+     0.03%     0.00%  smt      [unknown]             [.] 0x7370616377682e75
+     0.03%     0.00%  smt      ld-linux-x86-64.so.2  [.] 0x00007fae6df927ef
+
+
+#
+# (Tip: Show individual samples with: perf script)
+#

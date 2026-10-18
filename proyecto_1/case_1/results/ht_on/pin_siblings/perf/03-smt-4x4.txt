@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.031811493,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.033159675,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.033398230,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.032819009,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.035491942,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.030516225,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.032272754,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.029840680,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.033312487,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,16,0.035479573,334737756981.249573
+
+ Performance counter stats for 'build/smt 512 64 4 4 42 siblings' (10 runs):
+
+            234,29 msec task-clock                       #    4,914 CPUs utilized               ( +-  0,68% )
+       653 719 443      cycles                           #    2,790 GHz                         ( +-  0,68% )
+     1 008 597 986      instructions                     #    1,54  insn per cycle              ( +-  0,01% )
+         1 450 116      cache-references                 #    6,190 M/sec                       ( +-  1,38% )
+           309 948      cache-misses                     #   21,37% of all cache refs           ( +-  4,62% )
+                73      context-switches                 #  311,585 /sec                        ( +-  3,96% )
+                14      cpu-migrations                   #   59,756 /sec                        ( +-  2,78% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+          0,047673 +- 0,000596 seconds time elapsed  ( +-  1,25% )
+
