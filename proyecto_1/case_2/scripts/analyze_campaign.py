@@ -12,7 +12,10 @@ interval width vs. number of repetitions.
 
 Usage: python3 analyze_campaign.py
 Run from the case_2 root (e.g. `make analyze`). Expects
-results/raw/final_cmp.csv, final_smt.csv, final_cgmt.csv, final_fgmt.csv.
+results/raw/final_cmp_on.csv, final_smt_on.csv, final_cgmt.csv,
+final_fgmt.csv. CMP and SMT were measured in two sessions (SMT on / SMT
+off); this script uses the SMT-on session as the main data set, and
+scripts/compare_smt_sessions.py compares it against the SMT-off one.
 Writes results/raw/summary.csv and PNG plots under results/figures/.
 """
 
@@ -31,8 +34,8 @@ RAW_DIR = "results/raw"
 FIGURES_DIR = "results/figures"
 
 FILES = {
-    "cmp": os.path.join(RAW_DIR, "final_cmp.csv"),
-    "smt": os.path.join(RAW_DIR, "final_smt.csv"),
+    "cmp": os.path.join(RAW_DIR, "final_cmp_on.csv"),
+    "smt": os.path.join(RAW_DIR, "final_smt_on.csv"),
     "cgmt": os.path.join(RAW_DIR, "final_cgmt.csv"),
     "fgmt": os.path.join(RAW_DIR, "final_fgmt.csv"),
 }

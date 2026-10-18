@@ -9,8 +9,18 @@
 #
 # Assumes it is invoked from the case_2 root (e.g. `make campaign-cmp` or
 # `bash scripts/campaign_cmp.sh` from case_2/), not from inside scripts/.
+#
+# SMT=on|off (default on) only labels the output file (final_cmp_on.csv or
+# final_cmp_off.csv). It does NOT toggle SMT: set SMT in the system first,
+# then run this with the matching label.
 
 set -euo pipefail
+
+SMT="${SMT:-on}"
+case "$SMT" in
+    on|off) ;;
+    *) echo "SMT debe ser 'on' u 'off' (recibido: '$SMT')" >&2; exit 1 ;;
+esac
 
 declare -A STEPS_FOR_N=(
     [1024]=250
@@ -20,7 +30,7 @@ declare -A STEPS_FOR_N=(
 )
 REPETITIONS=200
 mkdir -p results/raw
-OUTPUT_CSV="results/raw/final_cmp.csv"
+OUTPUT_CSV="results/raw/final_cmp_${SMT}.csv"
 
 N_VALUES=(1024 2048 4096 8192)
 THREAD_COUNTS=(1 2 4 8 16)

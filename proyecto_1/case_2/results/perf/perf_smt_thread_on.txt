@@ -1,0 +1,24 @@
+WARNING: Ignored open failure for pid 3981031
+WARNING: Ignored open failure for pid 3981036
+
+ Performance counter stats for process id '3981019':
+
+        benchsmt-3981019     23,404,101,166      cycles                                                                
+          (null)-3981036      <not counted>      cycles                                                                
+          ;yéŒ4_-3981036      <not counted>      cycles                                                                
+        benchsmt-3981019     34,973,142,643      instructions                                                          
+          (null)-3981036      <not counted>      instructions                                                          
+          ;yéŒ4_-3981036      <not counted>      instructions                                                          
+        benchsmt-3981019              1,984      context-switches                                                      
+          (null)-3981036      <not counted>      context-switches                                                      
+          ;yéŒ4_-3981036      <not counted>      context-switches                                                      
+        benchsmt-3981019                259      cpu-migrations                                                        
+          (null)-3981036      <not counted>      cpu-migrations                                                        
+          ;yéŒ4_-3981036      <not counted>      cpu-migrations                                                        
+
+       0.947789453 seconds time elapsed
+
+Some events weren't counted. Try disabling the NMI watchdog:
+	echo 0 > /proc/sys/kernel/nmi_watchdog
+	perf stat ...
+	echo 1 > /proc/sys/kernel/nmi_watchdog

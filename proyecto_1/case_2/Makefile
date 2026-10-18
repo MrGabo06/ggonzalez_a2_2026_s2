@@ -1,26 +1,30 @@
 # =================================================
 # case_2 — N-body gravitacional (CE4302, Proyecto 1)
 #
-# Sigue la misma convencion que case_1: este Makefile expone los
-# targets "build", "experiments" y "clean" que el Makefile general de
-# proyecto_1/ invoca via `make -C case_2 <target>`. Ademas agrega
-# targets cortos para compilar y correr cada programa a mano mientras
-# se prueba, sin tener que escribir el comando de gcc completo cada vez.
+# Layout (sigue la convencion de case_1):
+#   engines/   motores de cada modelo de ejecucion (sin cambios)
+#   tests/     pruebas de correctitud (sin cambios)
+#   build/     binarios compilados (gitignored, se regeneran con `make build`)
+#   scripts/   campanas de medicion y post-procesamiento
+#   results/
+#     raw/       CSVs crudos: final_cmp_{on,off}.csv y final_smt_{on,off}.csv
+#                (dos sesiones de SMT), final_cgmt.csv, final_fgmt.csv,
+#                campanas piloto, summary*.csv
+#     figures/   PNGs generados por los scripts de analisis
+#     perf/      capturas de `perf stat` y muestreo de CPU logica
 # =================================================
 
 CC      := gcc
-# -I.       : los .c de este mismo directorio (Main.c, Bench*.c) ya ven
-#             NBody.h sin ayuda, pero -I. tambien cubre tests/*.c, que
-#             hacen #include "NBody.h" estando un nivel mas adentro.
-# -Iengines : BenchCmp.c, BenchSmt.c, BenchCgmt.c, BenchFgmt.c y
-#             tests/TestCmp.c, TestCgmt.c, TestFgmt.c hacen
-#             #include "Cmp.h" / "Smt.h" / "Cgmt.h" / "Fgmt.h", que
-#             viven en engines/.
 CFLAGS  := -O2 -Wall -march=native -I. -Iengines
 LDFLAGS := -lm -lpthread
 
 ENGINES := engines
 TESTS   := tests
+BUILD   := build
+SCRIPTS := scripts
+RESULTS_RAW     := results/raw
+RESULTS_FIGURES := results/figures
+RESULTS_PERF    := results/perf
 
 # ------- parametros de experimento (sobreescribibles por linea de comando) ----
 N        ?= 1024
@@ -31,14 +35,26 @@ FIBERS   ?= 8
 QUANTUM  ?= 64
 SEED     ?= 12345
 
-BINARIES := nbody bench benchcmp benchsmt benchcgmt benchfgmt
-TEST_BINARIES := test_forces test_cmp test_cgmt test_fgmt
+# Estado de SMT con el que se ETIQUETAN las salidas de campanas y perf
+# (on|off). No cambia SMT en el sistema: hay que apagarlo/encenderlo antes
+# y luego correr con el SMT= que corresponda, p. ej. `make campaign-cmp SMT=off`.
+SMT      ?= on
+# N usado en las graficas/tablas del paper y en el perfilado.
+PAPER_N  ?= 4096
+# Hilos del perfilado de SMT (scripts/perf_smt_thread.sh, sample_cpu_affinity.sh).
+PERF_THREADS ?= 8
 
-.PHONY: all help build test clean experiments \
+PROGRAMS      := nbody bench benchcmp benchsmt benchcgmt benchfgmt
+TEST_PROGRAMS := test_forces test_cmp test_cgmt test_fgmt
+BINARIES      := $(addprefix $(BUILD)/,$(PROGRAMS))
+TEST_BINARIES := $(addprefix $(BUILD)/,$(TEST_PROGRAMS))
+
+.PHONY: all help build test clean experiments sweep \
         run-nbody run-bench run-cmp run-smt run-cgmt run-fgmt \
         test-forces test-cmp test-cgmt test-fgmt \
-        campaign-cmp campaign-smt campaign-cgmt campaign-fgmt analyze \
-        perf-smt perf-smt-thread
+        campaign-cmp campaign-smt campaign-cgmt campaign-fgmt \
+        analyze analyze-smt plot-affinity paper-table analyze-all \
+        perf-smt perf-smt-thread sample-affinity
 
 all: help
 
@@ -51,114 +67,147 @@ help: ## Show available targets
 	@echo "  make run-cmp N=4096 THREADS=8"
 	@echo "  make run-fgmt N=2048 FIBERS=16 QUANTUM=8"
 
-build: $(BINARIES) $(TEST_BINARIES) ## Compile every program and test
+build: $(BINARIES) $(TEST_BINARIES) ## Compile every program and test into build/
 
 # --- correctitud: compara cada modelo contra el secuencial -----------------
 
 test: test-forces test-cmp test-cgmt test-fgmt ## Build and run all 4 correctness tests in order
 
-test-forces: test_forces ## Run the sequential force sanity checks
-	./test_forces
+test-forces: $(BUILD)/test_forces ## Run the sequential force sanity checks
+	$(BUILD)/test_forces
 
-test-cmp: test_cmp ## Compare CMP acceleration against sequential
-	./test_cmp
+test-cmp: $(BUILD)/test_cmp ## Compare CMP acceleration against sequential
+	$(BUILD)/test_cmp
 
-test-cgmt: test_cgmt ## Compare CGMT acceleration against sequential
-	./test_cgmt
+test-cgmt: $(BUILD)/test_cgmt ## Compare CGMT acceleration against sequential
+	$(BUILD)/test_cgmt
 
-test-fgmt: test_fgmt ## Compare FGMT acceleration against sequential
-	./test_fgmt
+test-fgmt: $(BUILD)/test_fgmt ## Compare FGMT acceleration against sequential
+	$(BUILD)/test_fgmt
 
 # --- correr un benchmark una vez, con los parametros de arriba -------------
 
-run-nbody: nbody ## Run the 1000-step energy/momentum sanity program
-	./nbody
+run-nbody: $(BUILD)/nbody ## Run the 1000-step energy/momentum sanity program
+	$(BUILD)/nbody
 
-run-bench: bench ## Time the sequential baseline (N, STEPS, SEED)
-	./bench $(N) $(STEPS) $(SEED)
+run-bench: $(BUILD)/bench ## Time the sequential baseline (N, STEPS, SEED)
+	$(BUILD)/bench $(N) $(STEPS) $(SEED)
 
-run-cmp: benchcmp ## Time the CMP model (N, STEPS, THREADS)
-	./benchcmp $(N) $(STEPS) $(THREADS)
+run-cmp: $(BUILD)/benchcmp ## Time the CMP model (N, STEPS, THREADS)
+	$(BUILD)/benchcmp $(N) $(STEPS) $(THREADS)
 
-run-smt: benchsmt ## Time the SMT model (N, STEPS, THREADS)
-	./benchsmt $(N) $(STEPS) $(THREADS)
+run-smt: $(BUILD)/benchsmt ## Time the SMT model (N, STEPS, THREADS)
+	$(BUILD)/benchsmt $(N) $(STEPS) $(THREADS)
 
-run-cgmt: benchcgmt ## Time the CGMT model (N, STEPS, THREADS, CHUNK)
-	./benchcgmt $(N) $(STEPS) $(THREADS) $(CHUNK)
+run-cgmt: $(BUILD)/benchcgmt ## Time the CGMT model (N, STEPS, THREADS, CHUNK)
+	$(BUILD)/benchcgmt $(N) $(STEPS) $(THREADS) $(CHUNK)
 
-run-fgmt: benchfgmt ## Time the FGMT model (N, STEPS, FIBERS, QUANTUM)
-	./benchfgmt $(N) $(STEPS) $(FIBERS) $(QUANTUM)
+run-fgmt: $(BUILD)/benchfgmt ## Time the FGMT model (N, STEPS, FIBERS, QUANTUM)
+	$(BUILD)/benchfgmt $(N) $(STEPS) $(FIBERS) $(QUANTUM)
 
 # --- campanas completas (200 repeticiones, scripts ya calibrados) ----------
+# Los scripts asumen que se invocan desde la raiz de case_2 (no desde dentro
+# de scripts/), y escriben su CSV en results/raw/.
 
-campaign-cmp: benchcmp ## Run the full CMP measurement campaign -> final_cmp.csv
-	chmod +x campaign_cmp.sh
-	./campaign_cmp.sh
+campaign-cmp: $(BUILD)/benchcmp ## Run the full CMP campaign -> results/raw/final_cmp_$(SMT).csv (SMT=on|off label)
+	chmod +x $(SCRIPTS)/campaign_cmp.sh
+	SMT=$(SMT) $(SCRIPTS)/campaign_cmp.sh
 
-campaign-smt: benchsmt ## Run the full SMT measurement campaign -> final_smt.csv
-	chmod +x campaign_smt.sh
-	./campaign_smt.sh
+campaign-smt: $(BUILD)/benchsmt ## Run the full SMT campaign -> results/raw/final_smt_$(SMT).csv (SMT=on|off label)
+	chmod +x $(SCRIPTS)/campaign_smt.sh
+	SMT=$(SMT) $(SCRIPTS)/campaign_smt.sh
 
-campaign-cgmt: benchcgmt ## Run the full CGMT measurement campaign -> final_cgmt.csv
-	chmod +x campaign_cgmt.sh
-	./campaign_cgmt.sh
+campaign-cgmt: $(BUILD)/benchcgmt ## Run the full CGMT measurement campaign -> results/raw/final_cgmt.csv
+	chmod +x $(SCRIPTS)/campaign_cgmt.sh
+	$(SCRIPTS)/campaign_cgmt.sh
 
-campaign-fgmt: benchfgmt ## Run the full FGMT measurement campaign -> final_fgmt.csv
-	chmod +x campaign_fgmt.sh
-	./campaign_fgmt.sh
+campaign-fgmt: $(BUILD)/benchfgmt ## Run the full FGMT measurement campaign -> results/raw/final_fgmt.csv
+	chmod +x $(SCRIPTS)/campaign_fgmt.sh
+	$(SCRIPTS)/campaign_fgmt.sh
 
-experiments: campaign-cmp campaign-smt campaign-cgmt campaign-fgmt ## Run all 4 campaigns (what proyecto_1/Makefile calls)
+experiments: campaign-cmp campaign-smt campaign-cgmt campaign-fgmt ## Run all 4 campaigns with the current SMT label (what proyecto_1/Makefile calls)
 
-analyze: ## Post-process the 4 final_*.csv into summary.csv and the plots
-	python3 analyze_campaign.py
+# El Makefile general (proyecto_1/) llama a `sweep` en cada caso. En este
+# caso el barrido por numero de hilos ya esta incluido en las campanas
+# (N x hilos x repeticiones), asi que sweep es un alias de experiments.
+sweep: experiments ## Thread-count sweep for scalability data (alias of experiments)
+
+# --- analisis (todo se regenera desde results/raw/*.csv) -------------------
+
+analyze: ## Summary + plots from final_{cmp,smt}_on.csv, final_cgmt.csv, final_fgmt.csv -> summary.csv, boxplots, scalability, convergence
+	python3 $(SCRIPTS)/analyze_campaign.py
+
+analyze-smt: ## Compare SMT on vs off (CMP and SMT models) for PAPER_N -> summary_smt_on_off.csv, smt_on_off_n<N>.png
+	python3 $(SCRIPTS)/compare_smt_sessions.py $(PAPER_N)
+
+plot-affinity: ## CPU-occupancy plot (SMT on vs off) from results/perf/cpu_affinity_{on,off}.csv
+	python3 $(SCRIPTS)/plot_cpu_affinity.py $(RESULTS_PERF)/cpu_affinity_on.csv $(RESULTS_PERF)/cpu_affinity_off.csv $(PAPER_N)
+
+paper-table: ## Print paper table rows (Tp in ms, 95% CI, speedup, efficiency) for PAPER_N
+	python3 $(SCRIPTS)/build_paper_table.py $(PAPER_N)
+
+analyze-all: analyze analyze-smt plot-affinity ## Regenerate every figure and summary CSV from the saved data
 
 # --- perfilado con perf (requisito del enunciado: comportamiento bajo SMT) -
+# Todas las salidas se etiquetan con SMT=on|off (no cambian SMT en el sistema).
 
-perf-smt: benchsmt ## Perf stat on benchsmt — rename output after each SMT BIOS toggle
+perf-smt: $(BUILD)/benchsmt ## perf stat on benchsmt -> results/perf/perf_smt_$(SMT).txt
+	@mkdir -p $(RESULTS_PERF)
 	perf stat -e cycles,instructions,context-switches,cpu-migrations \
-	    ./benchsmt $(N) $(STEPS) $(THREADS) 2> perf_smt.txt
-	@echo "Guardado en perf_smt.txt -- renombralo a perf_smt_on.txt o"
-	@echo "perf_smt_off.txt segun el estado de SMT en el BIOS antes de"
-	@echo "correrlo otra vez con el otro estado."
+	    $(BUILD)/benchsmt $(PAPER_N) $(STEPS) $(PERF_THREADS) 2> $(RESULTS_PERF)/perf_smt_$(SMT).txt
+	@echo "Guardado en $(RESULTS_PERF)/perf_smt_$(SMT).txt"
 
-perf-smt-thread: benchsmt ## Perf stat per-thread on benchsmt (uso de CPU por hilo logico)
-	perf stat --per-thread \
-	    ./benchsmt $(N) $(STEPS) $(THREADS) 2> perf_smt_thread.txt
-	@echo "Guardado en perf_smt_thread.txt"
+perf-smt-thread: $(BUILD)/benchsmt ## perf stat per thread on benchsmt (attaches to the PID) -> results/perf/perf_smt_thread_$(SMT).txt
+	chmod +x $(SCRIPTS)/perf_smt_thread.sh
+	$(SCRIPTS)/perf_smt_thread.sh $(PAPER_N) $(STEPS) $(PERF_THREADS) $(RESULTS_PERF)/perf_smt_thread_$(SMT).txt
 
-clean: ## Remove every compiled binary (keeps .c/.h/.sh/.csv sources)
-	rm -f $(BINARIES) $(TEST_BINARIES)
+sample-affinity: $(BUILD)/benchsmt ## Sample which logical CPU each thread runs on -> results/perf/cpu_affinity_$(SMT).csv
+	chmod +x $(SCRIPTS)/sample_cpu_affinity.sh
+	$(SCRIPTS)/sample_cpu_affinity.sh $(PAPER_N) $(STEPS) $(PERF_THREADS) $(RESULTS_PERF)/cpu_affinity_$(SMT).csv
+
+clean: ## Remove build/ (compiled binaries). Keeps results/ and sources.
+	rm -rf $(BUILD)
 
 # =================================================
 # Build rules
 # =================================================
 
-nbody: Main.c Nbody.c NBody.h
+$(BUILD)/nbody: Main.c Nbody.c NBody.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) Main.c Nbody.c -o $@ $(LDFLAGS)
 
-bench: Bench.c Nbody.c NBody.h
+$(BUILD)/bench: Bench.c Nbody.c NBody.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) Bench.c Nbody.c -o $@ $(LDFLAGS)
 
-benchcmp: BenchCmp.c Nbody.c $(ENGINES)/Cmp.c NBody.h $(ENGINES)/Cmp.h
+$(BUILD)/benchcmp: BenchCmp.c Nbody.c $(ENGINES)/Cmp.c NBody.h $(ENGINES)/Cmp.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) BenchCmp.c Nbody.c $(ENGINES)/Cmp.c -o $@ $(LDFLAGS)
 
-benchsmt: BenchSmt.c Nbody.c $(ENGINES)/Cmp.c $(ENGINES)/Smt.c NBody.h $(ENGINES)/Smt.h
+$(BUILD)/benchsmt: BenchSmt.c Nbody.c $(ENGINES)/Cmp.c $(ENGINES)/Smt.c NBody.h $(ENGINES)/Smt.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) BenchSmt.c Nbody.c $(ENGINES)/Cmp.c $(ENGINES)/Smt.c -o $@ $(LDFLAGS)
 
-benchcgmt: BenchCgmt.c Nbody.c $(ENGINES)/Cgmt.c NBody.h $(ENGINES)/Cgmt.h
+$(BUILD)/benchcgmt: BenchCgmt.c Nbody.c $(ENGINES)/Cgmt.c NBody.h $(ENGINES)/Cgmt.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) BenchCgmt.c Nbody.c $(ENGINES)/Cgmt.c -o $@ $(LDFLAGS)
 
-benchfgmt: BenchFgmt.c Nbody.c $(ENGINES)/Fgmt.c NBody.h $(ENGINES)/Fgmt.h
+$(BUILD)/benchfgmt: BenchFgmt.c Nbody.c $(ENGINES)/Fgmt.c NBody.h $(ENGINES)/Fgmt.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) BenchFgmt.c Nbody.c $(ENGINES)/Fgmt.c -o $@ $(LDFLAGS)
 
-test_forces: $(TESTS)/TestForces.c Nbody.c NBody.h
+$(BUILD)/test_forces: $(TESTS)/TestForces.c Nbody.c NBody.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) $(TESTS)/TestForces.c Nbody.c -o $@ $(LDFLAGS)
 
-test_cmp: $(TESTS)/TestCmp.c Nbody.c $(ENGINES)/Cmp.c NBody.h $(ENGINES)/Cmp.h
+$(BUILD)/test_cmp: $(TESTS)/TestCmp.c Nbody.c $(ENGINES)/Cmp.c NBody.h $(ENGINES)/Cmp.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) $(TESTS)/TestCmp.c Nbody.c $(ENGINES)/Cmp.c -o $@ $(LDFLAGS)
 
-test_cgmt: $(TESTS)/TestCgmt.c Nbody.c $(ENGINES)/Cgmt.c NBody.h $(ENGINES)/Cgmt.h
+$(BUILD)/test_cgmt: $(TESTS)/TestCgmt.c Nbody.c $(ENGINES)/Cgmt.c NBody.h $(ENGINES)/Cgmt.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) $(TESTS)/TestCgmt.c Nbody.c $(ENGINES)/Cgmt.c -o $@ $(LDFLAGS)
 
-test_fgmt: $(TESTS)/TestFgmt.c Nbody.c $(ENGINES)/Fgmt.c NBody.h $(ENGINES)/Fgmt.h
+$(BUILD)/test_fgmt: $(TESTS)/TestFgmt.c Nbody.c $(ENGINES)/Fgmt.c NBody.h $(ENGINES)/Fgmt.h
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) $(TESTS)/TestFgmt.c Nbody.c $(ENGINES)/Fgmt.c -o $@ $(LDFLAGS)

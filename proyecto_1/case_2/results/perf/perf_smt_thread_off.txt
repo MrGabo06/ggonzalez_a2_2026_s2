@@ -1,0 +1,54 @@
+WARNING: Ignored open failure for pid 3982652
+WARNING: Ignored open failure for pid 3982653
+WARNING: Ignored open failure for pid 3982654
+WARNING: Ignored open failure for pid 3982655
+WARNING: Ignored open failure for pid 3982656
+WARNING: Ignored open failure for pid 3982657
+WARNING: Ignored open failure for pid 3982658
+WARNING: Ignored open failure for pid 3982659
+
+ Performance counter stats for process id '3982642':
+
+        benchsmt-3982642     23,493,555,425      cycles                                                                
+          (null)-3982659      <not counted>      cycles                                                                
+          Ð‹ác¥X-3982659      <not counted>      cycles                                                                
+          Ð‹ác¥X-3982659      <not counted>      cycles                                                                
+          Ð‹ác¥X-3982659      <not counted>      cycles                                                                
+          Ð‹ác¥X-3982659      <not counted>      cycles                                                                
+          Ð‹ác¥X-3982659      <not counted>      cycles                                                                
+          Ð‹ác¥X-3982659      <not counted>      cycles                                                                
+          Ð‹ác¥X-3982659      <not counted>      cycles                                                                
+        benchsmt-3982642     35,199,123,527      instructions                                                          
+          (null)-3982659      <not counted>      instructions                                                          
+          Ð‹ác¥X-3982659      <not counted>      instructions                                                          
+          Ð‹ác¥X-3982659      <not counted>      instructions                                                          
+          Ð‹ác¥X-3982659      <not counted>      instructions                                                          
+          Ð‹ác¥X-3982659      <not counted>      instructions                                                          
+          Ð‹ác¥X-3982659      <not counted>      instructions                                                          
+          Ð‹ác¥X-3982659      <not counted>      instructions                                                          
+          Ð‹ác¥X-3982659      <not counted>      instructions                                                          
+        benchsmt-3982642              2,406      context-switches                                                      
+          (null)-3982659      <not counted>      context-switches                                                      
+          Ð‹ác¥X-3982659      <not counted>      context-switches                                                      
+          Ð‹ác¥X-3982659      <not counted>      context-switches                                                      
+          Ð‹ác¥X-3982659      <not counted>      context-switches                                                      
+          Ð‹ác¥X-3982659      <not counted>      context-switches                                                      
+          Ð‹ác¥X-3982659      <not counted>      context-switches                                                      
+          Ð‹ác¥X-3982659      <not counted>      context-switches                                                      
+          Ð‹ác¥X-3982659      <not counted>      context-switches                                                      
+        benchsmt-3982642                670      cpu-migrations                                                        
+          (null)-3982659      <not counted>      cpu-migrations                                                        
+          Ð‹ác¥X-3982659      <not counted>      cpu-migrations                                                        
+          Ð‹ác¥X-3982659      <not counted>      cpu-migrations                                                        
+          Ð‹ác¥X-3982659      <not counted>      cpu-migrations                                                        
+          Ð‹ác¥X-3982659      <not counted>      cpu-migrations                                                        
+          Ð‹ác¥X-3982659      <not counted>      cpu-migrations                                                        
+          Ð‹ác¥X-3982659      <not counted>      cpu-migrations                                                        
+          Ð‹ác¥X-3982659      <not counted>      cpu-migrations                                                        
+
+       0.952085743 seconds time elapsed
+
+Some events weren't counted. Try disabling the NMI watchdog:
+	echo 0 > /proc/sys/kernel/nmi_watchdog
+	perf stat ...
+	echo 1 > /proc/sys/kernel/nmi_watchdog
