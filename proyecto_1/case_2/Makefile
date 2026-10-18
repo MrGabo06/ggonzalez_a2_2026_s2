@@ -43,16 +43,29 @@ SMT      ?= on
 PAPER_N  ?= 4096
 # Hilos del perfilado de SMT (scripts/perf_smt_thread.sh, sample_cpu_affinity.sh).
 PERF_THREADS ?= 8
+# Modo defensa (`make sweep-quick`): una version corta de las campanas.
+QUICK_N     ?= 4096
+QUICK_STEPS ?= 8
+QUICK_REPS  ?= 30
+# Modelos del modo defensa (subconjunto de: cmp smt cgmt fgmt). El secuencial
+# siempre corre. Ej.: `make sweep-quick MODELS=cgmt` o MODELS="cmp smt".
+MODELS      ?= cmp smt cgmt fgmt
+# Repetir solo algunos hilos de la campana de SMT (p. ej. SMT_WORKERS="8 16"):
+# escribe results/raw/final_smt_<SMT>_rerun.csv sin tocar el archivo completo.
+SMT_WORKERS ?=
+# APPLY=1 hace que `make merge-smt-rerun` escriba el reemplazo (sin APPLY solo reporta).
+APPLY       ?=
 
-PROGRAMS      := nbody bench benchcmp benchsmt benchcgmt benchfgmt
+PROGRAMS     := nbody bench benchcmp benchsmt benchcgmt benchfgmt
 TEST_PROGRAMS := test_forces test_cmp test_cgmt test_fgmt
 BINARIES      := $(addprefix $(BUILD)/,$(PROGRAMS))
 TEST_BINARIES := $(addprefix $(BUILD)/,$(TEST_PROGRAMS))
 
-.PHONY: all help build test clean experiments sweep \
+.PHONY: all help build test clean experiments sweep sweep-quick \
         run-nbody run-bench run-cmp run-smt run-cgmt run-fgmt \
         test-forces test-cmp test-cgmt test-fgmt \
         campaign-cmp campaign-smt campaign-cgmt campaign-fgmt \
+        rerun-smt merge-smt-rerun \
         analyze analyze-smt plot-affinity paper-table analyze-all \
         perf-smt perf-smt-thread sample-affinity
 
@@ -115,7 +128,13 @@ campaign-cmp: $(BUILD)/benchcmp ## Run the full CMP campaign -> results/raw/fina
 
 campaign-smt: $(BUILD)/benchsmt ## Run the full SMT campaign -> results/raw/final_smt_$(SMT).csv (SMT=on|off label)
 	chmod +x $(SCRIPTS)/campaign_smt.sh
-	SMT=$(SMT) $(SCRIPTS)/campaign_smt.sh
+	SMT=$(SMT) WORKERS="$(SMT_WORKERS)" $(SCRIPTS)/campaign_smt.sh
+
+rerun-smt: ## Re-measure only SMT with 8 and 16 threads (all N, 200 reps) -> results/raw/final_smt_$(SMT)_rerun.csv
+	$(MAKE) campaign-smt SMT=$(SMT) SMT_WORKERS="8 16"
+
+merge-smt-rerun: ## Compare the SMT rerun against the old SMT and CMP data (APPLY=1 replaces those rows in final_smt_$(SMT).csv)
+	python3 $(SCRIPTS)/merge_smt_rerun.py $(SMT) $(if $(APPLY),--apply)
 
 campaign-cgmt: $(BUILD)/benchcgmt ## Run the full CGMT measurement campaign -> results/raw/final_cgmt.csv
 	chmod +x $(SCRIPTS)/campaign_cgmt.sh
@@ -131,6 +150,15 @@ experiments: campaign-cmp campaign-smt campaign-cgmt campaign-fgmt ## Run all 4 
 # caso el barrido por numero de hilos ya esta incluido en las campanas
 # (N x hilos x repeticiones), asi que sweep es un alias de experiments.
 sweep: experiments ## Thread-count sweep for scalability data (alias of experiments)
+
+# Modo defensa: los modelos elegidos (MODELS, por defecto los 4) + baseline
+# secuencial con un solo N, pocos pasos y pocas repeticiones. Verifica que todos
+# den el mismo checksum y compara contra la campana completa. Mide el estado de
+# SMT actual del sistema.
+sweep-quick: $(BUILD)/benchcmp $(BUILD)/benchsmt $(BUILD)/benchcgmt $(BUILD)/benchfgmt ## Defense mode: short sweep (MODELS=cmp smt cgmt fgmt, N=QUICK_N, QUICK_STEPS steps, QUICK_REPS reps) -> results/quick/
+	chmod +x $(SCRIPTS)/sweep_quick.sh
+	N=$(QUICK_N) STEPS=$(QUICK_STEPS) REPS=$(QUICK_REPS) MODELS="$(MODELS)" SMT=$(SMT) $(SCRIPTS)/sweep_quick.sh
+	python3 $(SCRIPTS)/sweep_quick_summary.py $(SMT)
 
 # --- analisis (todo se regenera desde results/raw/*.csv) -------------------
 

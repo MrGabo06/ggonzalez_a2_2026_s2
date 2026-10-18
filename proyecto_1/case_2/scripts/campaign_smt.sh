@@ -13,6 +13,11 @@
 # SMT=on|off (default on) only labels the output file (final_smt_on.csv or
 # final_smt_off.csv). It does NOT toggle SMT: set SMT in the system first,
 # then run this with the matching label.
+#
+# WORKERS="8 16" (optional) re-measures only those thread counts, for all N,
+# and writes results/raw/final_smt_<SMT>_rerun.csv so the existing full
+# campaign file is NOT overwritten. Use scripts/merge_smt_rerun.py to compare
+# and, if wanted, merge the rerun into the full file.
 
 set -euo pipefail
 
@@ -34,6 +39,13 @@ OUTPUT_CSV="results/raw/final_smt_${SMT}.csv"
 
 N_VALUES=(1024 2048 4096 8192)
 THREAD_COUNTS=(1 2 4 8 16)
+if [[ -n "${WORKERS:-}" ]]; then
+    read -r -a THREAD_COUNTS <<< "$WORKERS"
+    for t in "${THREAD_COUNTS[@]}"; do
+        [[ "$t" =~ ^[0-9]+$ ]] || { echo "WORKERS debe ser una lista de enteros (recibido: '$WORKERS')" >&2; exit 1; }
+    done
+    OUTPUT_CSV="results/raw/final_smt_${SMT}_rerun.csv"
+fi
 CONFIGS=()
 for n in "${N_VALUES[@]}"; do
     for threads in "${THREAD_COUNTS[@]}"; do
