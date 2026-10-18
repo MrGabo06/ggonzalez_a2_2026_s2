@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.034931528,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.041988297,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.044228712,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.039354462,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.039239155,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.040019146,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.036185018,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.035625563,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.037983826,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+smt,512,64,8,0.044291073,334737756981.249573
+
+ Performance counter stats for 'build/smt 512 64 4 2 42 cores' (10 runs):
+
+            147,25 msec task-clock                       #    2,725 CPUs utilized               ( +-  0,06% )
+       410 795 457      cycles                           #    2,790 GHz                         ( +-  0,06% )
+     1 007 316 907      instructions                     #    2,45  insn per cycle              ( +-  0,01% )
+         1 509 137      cache-references                 #   10,249 M/sec                       ( +-  0,75% )
+           301 605      cache-misses                     #   19,99% of all cache refs           ( +-  4,79% )
+                57      context-switches                 #  387,094 /sec                        ( +-  3,25% )
+                 5      cpu-migrations                   #   33,956 /sec                        ( +- 10,24% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+           0,05403 +- 0,00107 seconds time elapsed  ( +-  1,97% )
+

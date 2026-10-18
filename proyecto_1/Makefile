@@ -24,7 +24,7 @@ else
   CASES := $(CASE)
 endif
 
-.PHONY: all help list build experiments clean $(CASES)
+.PHONY: all help list build experiments sweep sweep-quick clean $(CASES)
 
 all: help
 
@@ -38,6 +38,8 @@ help: ## Show available targets
 	@echo "  make build"
 	@echo "  make build CASE=case_1"
 	@echo "  make experiments CASE=case_1 N=1024 BLOCK_SIZE=128 THREADS=8 ITER=200"
+	@echo "  make sweep CASE=case_1 N=1024 BLOCK_SIZE=128 ITER=200"
+	@echo "  make sweep-quick CASE=case_1"
 
 list: ## List detected case_* directories (each with its own Makefile)
 	@echo "$(ALL_CASES)"
@@ -52,6 +54,18 @@ experiments: ## Run the >=200-iteration experiments of every case (or CASE=case_
 	@for case in $(CASES); do \
 	  echo "== experiments: $$case =="; \
 	  $(MAKE) -C $$case experiments $(MAKEOVERRIDES) || exit 1; \
+	done
+
+sweep: ## Run the thread-count sweep (scalability data) of every case (or CASE=case_X)
+	@for case in $(CASES); do \
+	  echo "== sweep: $$case =="; \
+	  $(MAKE) -C $$case sweep $(MAKEOVERRIDES) || exit 1; \
+	done
+
+sweep-quick: ## Fast sanity check of the sweep pipeline of every case (or CASE=case_X)
+	@for case in $(CASES); do \
+	  echo "== sweep-quick: $$case =="; \
+	  $(MAKE) -C $$case sweep-quick $(MAKEOVERRIDES) || exit 1; \
 	done
 
 clean: ## Clean build/ and results/ of every case (or CASE=case_X)

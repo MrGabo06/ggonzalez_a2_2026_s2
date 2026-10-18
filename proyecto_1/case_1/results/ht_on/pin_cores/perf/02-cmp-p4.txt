@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.033297498,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.033198789,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.037661317,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.035537899,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.033441545,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.036255627,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.036380209,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.036146223,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.036229902,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+cmp,512,64,4,0.033320740,334737756981.249573
+
+ Performance counter stats for 'build/cmp 512 64 4 42' (10 runs):
+
+            146,77 msec task-clock                       #    2,933 CPUs utilized               ( +-  0,15% )
+       409 849 518      cycles                           #    2,792 GHz                         ( +-  0,15% )
+     1 006 017 552      instructions                     #    2,45  insn per cycle              ( +-  0,05% )
+         1 374 377      cache-references                 #    9,364 M/sec                       ( +-  0,43% )
+           182 077      cache-misses                     #   13,25% of all cache refs           ( +-  3,83% )
+                 6      context-switches                 #   40,880 /sec                        ( +-  9,30% )
+                 3      cpu-migrations                   #   20,440 /sec                        ( +- 10,00% )
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+          0,050040 +- 0,000497 seconds time elapsed  ( +-  0,99% )
+

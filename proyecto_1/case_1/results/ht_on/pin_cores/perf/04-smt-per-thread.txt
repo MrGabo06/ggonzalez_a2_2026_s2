@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '74345':
+
+             smt-74345             8 615,62 msec task-clock                       #    3,549 CPUs utilized             
+             smt-74345       24 065 580 711      cycles                           #    2,793 GHz                       
+             smt-74345       61 745 379 197      instructions                     #    2,57  insn per cycle            
+
+       2,427857550 seconds time elapsed
+

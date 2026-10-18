@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '97238':
+
+             smt-97238            15 061,27 msec task-clock                       #    6,217 CPUs utilized             
+             smt-97238       42 066 056 037      cycles                           #    2,793 GHz                       
+             smt-97238       61 755 105 144      instructions                     #    1,47  insn per cycle            
+
+       2,422741000 seconds time elapsed
+

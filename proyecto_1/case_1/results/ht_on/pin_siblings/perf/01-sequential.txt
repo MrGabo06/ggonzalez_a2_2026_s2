@@ -1,0 +1,35 @@
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.135438142,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.148380365,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.140826928,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.134560124,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.133793569,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.132819801,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.132953792,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.133514957,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.133778139,334737756981.249573
+model,n,block_size,workers,time_sec,checksum
+sequential,512,64,1,0.132949663,334737756981.249573
+
+ Performance counter stats for 'build/sequential 512 64 42' (10 runs):
+
+            149,43 msec task-clock                       #    0,996 CPUs utilized               ( +-  1,10% )
+       417 375 999      cycles                           #    2,793 GHz                         ( +-  1,09% )
+     1 005 790 884      instructions                     #    2,41  insn per cycle              ( +-  0,03% )
+         1 298 901      cache-references                 #    8,692 M/sec                       ( +-  1,07% )
+           278 371      cache-misses                     #   21,43% of all cache refs           ( +- 11,07% )
+                 3      context-switches                 #   20,076 /sec                        ( +- 62,94% )
+                 0      cpu-migrations                   #    0,000 /sec                      
+   <not supported>      stalled-cycles-frontend                                               
+   <not supported>      stalled-cycles-backend                                                
+
+           0,15004 +- 0,00167 seconds time elapsed  ( +-  1,11% )
+
