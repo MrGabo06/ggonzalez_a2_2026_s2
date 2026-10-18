@@ -1,0 +1,46 @@
+# started on Sun Oct 11 17:14:48 2026
+
+CPU0,638003225,,cycles,0.00%,350949631,100.00,,
+CPU1,647158880,,cycles,0.00%,350908414,100.00,,
+CPU2,639344520,,cycles,0.00%,350842217,100.00,,
+CPU3,650833011,,cycles,0.00%,350796046,100.00,,
+CPU0,1799514369,,instructions,0.00%,350947425,100.00,2.82,insn per cycle
+CPU1,1841703015,,instructions,0.00%,350906038,100.00,2.85,insn per cycle
+CPU2,1833060428,,instructions,0.00%,350839432,100.00,2.87,insn per cycle
+CPU3,1822600786,,instructions,0.00%,350793497,100.00,2.80,insn per cycle
+CPU0,14272559,,cache-references,0.00%,350944971,100.00,,
+CPU1,14680717,,cache-references,0.00%,350903512,100.00,,
+CPU2,14469719,,cache-references,0.00%,350837024,100.00,,
+CPU3,14726486,,cache-references,0.00%,350790974,100.00,,
+CPU0,29243,,cache-misses,0.00%,350941792,100.00,0.20,of all cache refs
+CPU1,224886,,cache-misses,0.00%,350900201,100.00,1.53,of all cache refs
+CPU2,80854,,cache-misses,0.00%,350833773,100.00,0.56,of all cache refs
+CPU3,232288,,cache-misses,0.00%,350787650,100.00,1.58,of all cache refs
+CPU0,23435053,,L1-dcache-load-misses [cpu],0.00%,350937796,100.00,,
+CPU1,23611392,,L1-dcache-load-misses [cpu],0.00%,350896148,100.00,,
+CPU2,23343222,,L1-dcache-load-misses [cpu],0.00%,350829728,100.00,,
+CPU3,23825865,,L1-dcache-load-misses [cpu],0.00%,350783610,100.00,,
+CPU0,1795,,LLC-load-misses [cpu],0.00%,350933114,100.00,,
+CPU1,17066,,LLC-load-misses [cpu],0.00%,350891379,100.00,,
+CPU2,7642,,LLC-load-misses [cpu],0.00%,350824832,100.00,,
+CPU3,16516,,LLC-load-misses [cpu],0.00%,350778583,100.00,,
+CPU0,150274030,,cycle_activity.stalls_total [cpu],0.00%,350926891,100.00,,
+CPU1,148442905,,cycle_activity.stalls_total [cpu],0.00%,350885086,100.00,,
+CPU2,145455044,,cycle_activity.stalls_total [cpu],0.00%,350818491,100.00,,
+CPU3,155141904,,cycle_activity.stalls_total [cpu],0.00%,350772284,100.00,,
+CPU0,15051820,,cycle_activity.stalls_l2_miss [cpu],0.00%,350919331,100.00,,
+CPU1,15929946,,cycle_activity.stalls_l2_miss [cpu],0.00%,350877608,100.00,,
+CPU2,14934176,,cycle_activity.stalls_l2_miss [cpu],0.00%,350811201,100.00,,
+CPU3,17702924,,cycle_activity.stalls_l2_miss [cpu],0.00%,350764944,100.00,,
+CPU0,131954,,cycle_activity.stalls_l3_miss [cpu],0.00%,350910984,100.00,,
+CPU1,1196170,,cycle_activity.stalls_l3_miss [cpu],0.00%,350869398,100.00,,
+CPU2,579074,,cycle_activity.stalls_l3_miss [cpu],0.00%,350802776,100.00,,
+CPU3,1387317,,cycle_activity.stalls_l3_miss [cpu],0.00%,350756379,100.00,,
+CPU0,29022,,context-switches [software],0.00%,350901346,100.00,,
+CPU1,26684,,context-switches [software],0.00%,350859660,100.00,,
+CPU2,26306,,context-switches [software],0.00%,350792968,100.00,,
+CPU3,28503,,context-switches [software],0.00%,350746732,100.00,,
+CPU0,6,,cpu-migrations [software],0.00%,350900436,100.00,,
+CPU1,7,,cpu-migrations [software],0.00%,350858792,100.00,,
+CPU2,7,,cpu-migrations [software],0.00%,350792225,100.00,,
+CPU3,8,,cpu-migrations [software],0.00%,350745930,100.00,,
