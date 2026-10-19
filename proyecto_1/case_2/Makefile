@@ -55,19 +55,24 @@ MODELS      ?= cmp smt cgmt fgmt
 SMT_WORKERS ?=
 # APPLY=1 hace que `make merge-smt-rerun` escriba el reemplazo (sin APPLY solo reporta).
 APPLY       ?=
+# Perfilado generico (`make perf PERF_MODEL=cmp|smt|cgmt|fgmt`, `make perf-all`).
+PERF_MODEL   ?= cmp
+PERF_CHUNK   ?= 8
+PERF_QUANTUM ?= 64
+PERF_EVENTS  ?= cycles,instructions,context-switches,cpu-migrations
 
 PROGRAMS     := nbody bench benchcmp benchsmt benchcgmt benchfgmt
 TEST_PROGRAMS := test_forces test_cmp test_cgmt test_fgmt
 BINARIES      := $(addprefix $(BUILD)/,$(PROGRAMS))
 TEST_BINARIES := $(addprefix $(BUILD)/,$(TEST_PROGRAMS))
 
-.PHONY: all help build test clean experiments sweep sweep-quick \
+.PHONY: all help build test clean experiments sweep sweep-quick defense \
         run-nbody run-bench run-cmp run-smt run-cgmt run-fgmt \
         test-forces test-cmp test-cgmt test-fgmt \
         campaign-cmp campaign-smt campaign-cgmt campaign-fgmt \
         rerun-smt merge-smt-rerun \
         analyze analyze-smt plot-affinity paper-table analyze-all \
-        perf-smt perf-smt-thread sample-affinity
+        perf perf-all perf-smt perf-smt-thread sample-affinity
 
 all: help
 
@@ -155,6 +160,11 @@ sweep: experiments ## Thread-count sweep for scalability data (alias of experime
 # secuencial con un solo N, pocos pasos y pocas repeticiones. Verifica que todos
 # den el mismo checksum y compara contra la campana completa. Mide el estado de
 # SMT actual del sistema.
+defense: ## Defense in one command: build, run the 4 tests, then the quick sweep for the current SMT state (SMT=on|off label)
+	$(MAKE) build
+	$(MAKE) test
+	$(MAKE) sweep-quick SMT=$(SMT)
+
 sweep-quick: $(BUILD)/benchcmp $(BUILD)/benchsmt $(BUILD)/benchcgmt $(BUILD)/benchfgmt ## Defense mode: short sweep (MODELS=cmp smt cgmt fgmt, N=QUICK_N, QUICK_STEPS steps, QUICK_REPS reps) -> results/quick/
 	chmod +x $(SCRIPTS)/sweep_quick.sh
 	N=$(QUICK_N) STEPS=$(QUICK_STEPS) REPS=$(QUICK_REPS) MODELS="$(MODELS)" SMT=$(SMT) $(SCRIPTS)/sweep_quick.sh
@@ -178,6 +188,24 @@ analyze-all: analyze analyze-smt plot-affinity ## Regenerate every figure and su
 
 # --- perfilado con perf (requisito del enunciado: comportamiento bajo SMT) -
 # Todas las salidas se etiquetan con SMT=on|off (no cambian SMT en el sistema).
+
+# Argumentos de cada benchmark en el perfilado (mismos que usan las campanas).
+PERF_ARGS_cmp  = $(PAPER_N) $(STEPS) $(PERF_THREADS)
+PERF_ARGS_smt  = $(PAPER_N) $(STEPS) $(PERF_THREADS)
+PERF_ARGS_cgmt = $(PAPER_N) $(STEPS) $(PERF_THREADS) $(PERF_CHUNK)
+PERF_ARGS_fgmt = $(PAPER_N) $(STEPS) $(PERF_THREADS) $(PERF_QUANTUM)
+
+perf: ## perf stat on any model: PERF_MODEL=cmp|smt|cgmt|fgmt -> results/perf/perf_<model>_$(SMT).txt
+	@case "$(PERF_MODEL)" in cmp|smt|cgmt|fgmt) ;; \
+	    *) echo "PERF_MODEL debe ser cmp, smt, cgmt o fgmt (recibido: '$(PERF_MODEL)')" >&2; exit 1 ;; esac
+	$(MAKE) $(BUILD)/bench$(PERF_MODEL)
+	@mkdir -p $(RESULTS_PERF)
+	perf stat -e $(PERF_EVENTS) \
+	    $(BUILD)/bench$(PERF_MODEL) $(PERF_ARGS_$(PERF_MODEL)) 2> $(RESULTS_PERF)/perf_$(PERF_MODEL)_$(SMT).txt
+	@echo "Guardado en $(RESULTS_PERF)/perf_$(PERF_MODEL)_$(SMT).txt"
+
+perf-all: ## perf stat on the 4 models (current SMT label) -> results/perf/perf_<model>_$(SMT).txt
+	for m in cmp smt cgmt fgmt; do $(MAKE) perf PERF_MODEL=$$m || exit 1; done
 
 perf-smt: $(BUILD)/benchsmt ## perf stat on benchsmt -> results/perf/perf_smt_$(SMT).txt
 	@mkdir -p $(RESULTS_PERF)
