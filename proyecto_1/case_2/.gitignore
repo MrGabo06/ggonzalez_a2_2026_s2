@@ -1,0 +1,11 @@
+# Binarios compilados (se generan localmente con gcc, no se versionan)
+build/
+*.o
+*.out
+
+# Logs de campanas en progreso (no la evidencia final, que vive en results/)
+*.log
+
+# Corridas del modo defensa y respaldos de merge (se regeneran)
+results/quick/
+*.bak
