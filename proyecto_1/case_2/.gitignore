@@ -5,3 +5,7 @@ build/
 
 # Logs de campanas en progreso (no la evidencia final, que vive en results/)
 *.log
+
+# Corridas del modo defensa y respaldos de merge (se regeneran)
+results/quick/
+*.bak

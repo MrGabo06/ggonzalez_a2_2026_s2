@@ -12,8 +12,6 @@
 
 #include <math.h>
 
-#include <stdlib.h>
-
 /* Initial velocities are drawn uniformly from [-INITIAL_SPEED_SCALE, +INITIAL_SPEED_SCALE]. */
 #define INITIAL_SPEED_SCALE 0.1
 
