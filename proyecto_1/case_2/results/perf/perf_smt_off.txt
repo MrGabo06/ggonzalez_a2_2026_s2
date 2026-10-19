@@ -1,0 +1,14 @@
+
+ Performance counter stats for 'build/benchsmt 4096 200 8':
+
+    23,773,765,525      cycles                                                                
+    35,691,627,062      instructions                                                          
+             2,526      context-switches                                                      
+               462      cpu-migrations                                                        
+
+       1.089930692 seconds time elapsed
+
+       7.262840000 seconds user
+       0.129014000 seconds sys
+
+

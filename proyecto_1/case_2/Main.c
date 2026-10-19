@@ -31,10 +31,14 @@ int main(void)
     double px, py, pz;
     NBodyTotalMomentum(sys, &px, &py, &pz);
 
+    double kinetic, potential;
+    NBodyTotalEnergy(sys, &kinetic, &potential);
+    
     printf("Bodies:          %d\n", sys->Count);
     printf("Total mass:      %.17g\n", NBodyTotalMass(sys));
     printf("Initial momentum: (%.3e, %.3e, %.3e)\n", px, py, pz);
     printf("Initial body 0:   (%.6f, %.6f, %.6f)\n", sys->PosX[0], sys->PosY[0], sys->PosZ[0]);
+    printf("Initial energy:   kinetic=%.6e potential=%.6e total=%.6e\n", kinetic, potential, kinetic + potential);
 
     for (int step = 0; step < STEP_COUNT; step++)
     {
@@ -42,10 +46,12 @@ int main(void)
     }
 
     NBodyTotalMomentum(sys, &px, &py, &pz);
+    NBodyTotalEnergy(sys, &kinetic, &potential);
 
     printf("Steps done:      %d (time step %g)\n", STEP_COUNT, TIME_STEP);
     printf("Final momentum:   (%.3e, %.3e, %.3e)\n", px, py, pz);
     printf("Final body 0:     (%.6f, %.6f, %.6f)\n", sys->PosX[0], sys->PosY[0], sys->PosZ[0]);
+    printf("Final energy:     kinetic=%.6e potential=%.6e total=%.6e\n", kinetic, potential, kinetic + potential);
 
     NBodyDestroy(sys);
     return 0;

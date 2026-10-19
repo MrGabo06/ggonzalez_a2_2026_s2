@@ -51,10 +51,15 @@ int main(int argc, char **argv)
     double t0 = NowSeconds();
     for (int s = 0; s < steps; s++)
     {
-        NBodyKick(sys, 0.001, 0, n);
+        /* Velocity-Verlet: half kick, full drift, recompute forces, half kick.
+         * The two kicks must use half of the time step (0.0005), not the full
+         * step (0.001) -- using the full step here was a bug: it applied twice
+         * the correct velocity change per step, so the trajectory (and the
+         * final checksum) diverged from the sequential/CMP/SMT/CGMT reference. */
+        NBodyKick(sys, 0.0005, 0, n);
         NBodyDrift(sys, 0.001, 0, n);
         NBodyComputeAccelerationFgmt(sys, fiberCount, quantumBodies);
-        NBodyKick(sys, 0.001, 0, n);
+        NBodyKick(sys, 0.0005, 0, n);
     }
     double t1 = NowSeconds();
 
