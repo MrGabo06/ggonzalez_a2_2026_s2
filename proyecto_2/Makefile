@@ -48,8 +48,24 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: build clean help run
+.PHONY: build clean help run test
 build: $(TARGET)
+
+# Unit tests: validator and sequential baseline (no special hardware needed)
+TEST_BIN  := $(BUILD)/test_validator
+TEST_SRCS := tests/test_validator.cpp \
+             common/image.cpp \
+             common/filter.cpp \
+             common/validate.cpp \
+             backends/seq/seq_backend.cpp
+
+# Builds the test program and runs it, make fails if any test fails
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
+$(TEST_BIN): $(TEST_SRCS)
+	@mkdir -p $(BUILD)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
@@ -81,6 +97,7 @@ help:
 	@echo "Objetivos:"
 	@echo "  build (por defecto) Compila build/dlp_bench"
 	@echo "  run                Compila si hace falta y ejecuta dlp_bench"
+	@echo "  test               Compila y ejecuta las pruebas del validador y del baseline"
 	@echo "  clean              Borra la carpeta build/"
 	@echo "  help               Muestra esta ayuda"
 	@echo ""
