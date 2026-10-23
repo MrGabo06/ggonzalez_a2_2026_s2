@@ -4,6 +4,7 @@
 // Uso:
 //   dlp_bench --backend seq --size 1024 [--filter gauss|sobel] [--reps 5]
 //             [--seed 42] [--input img.pgm] [--output out.pgm]
+//             [--validate [--tol N]]
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
@@ -12,6 +13,7 @@
 #include "backends/backend.h"
 #include "common/filter.h"
 #include "common/image.h"
+#include "common/validate.h"
 
 namespace {
 
@@ -23,11 +25,14 @@ struct Options {
     int size = 1024;
     int reps = 5;
     uint32_t seed = 42;
+    bool validate = false;              // Compare against the baseline after timing
+    int tolerance = 0;                  // Allowed per-pixel error for --validate
 };
 
 void usage() {
     std::cerr << "Uso: dlp_bench --backend <nombre> [--size N] [--filter gauss|sobel]\n"
                  "                 [--reps N] [--seed N] [--input img.pgm] [--output out.pgm]\n"
+                 "                 [--validate [--tol N]]\n"
                  "Backends compilados:";
     for (const auto& n : available_backends()) std::cerr << " " << n;
     std::cerr << "\n";
@@ -48,10 +53,31 @@ Options parse_args(int argc, char** argv) {
         else if (a == "--size") o.size = std::stoi(next());
         else if (a == "--reps") o.reps = std::stoi(next());
         else if (a == "--seed") o.seed = static_cast<uint32_t>(std::stoul(next()));
+        else if (a == "--validate") o.validate = true;
+        else if (a == "--tol") o.tolerance = std::stoi(next());
         else if (a == "--help" || a == "-h") { usage(); std::exit(0); }
         else { std::cerr << "Opción desconocida: " << a << "\n"; usage(); std::exit(1); }
     }
     return o;
+}
+
+// Compares the backend output against the sequential baseline, returns true if it passes
+bool RunValidation(const Options& opt, const Image& input, const Filter& filter, const Image& output) {
+    // Step 1: get the reference image from the sequential baseline
+    auto baseline = create_backend("seq");
+    Image reference;
+    baseline->run(input, filter, reference);
+
+    // Step 2: compare the backend output against it
+    const ValidationResult result = Validate(reference, output, opt.tolerance);
+
+    // Step 3: print the report
+    std::cout << "validate," << opt.backend << "," << opt.filter << ","
+              << input.width << "x" << input.height
+              << ",max=" << result.max_abs_error << ",diff=" << result.differing_pixels
+              << ",mse=" << result.mse << ",psnr=" << result.psnr
+              << ",ok=" << result.ok << "\n";
+    return result.ok;
 }
 
 }  // namespace
@@ -89,6 +115,9 @@ int main(int argc, char** argv) {
 
         write_pgm(opt.output, output);
         std::cout << "Salida escrita en " << opt.output << "\n";
+
+        // Exit code 3 when validation fails, so scripts can detect it
+        if (opt.validate && !RunValidation(opt, input, filter, output)) return 3;
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;

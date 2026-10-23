@@ -26,6 +26,7 @@ SIMDFLAGS := -mavx2 -mfma
 SRCS := src/main.cpp \
         common/image.cpp \
         common/filter.cpp \
+        common/validate.cpp \
         backends/registry.cpp \
         backends/seq/seq_backend.cpp \
         backends/fpga/fpga_backend.cpp
