@@ -29,6 +29,7 @@ SRCS := src/main.cpp \
         common/validate.cpp \
         backends/registry.cpp \
         backends/seq/seq_backend.cpp \
+        backends/seq/seq_separable_backend.cpp \
         backends/fpga/fpga_backend.cpp
 
 ifeq ($(SIMD),1)
@@ -110,7 +111,7 @@ help:
 	@echo "  CUDA_PATH=<ruta>   Ruta del CUDA Toolkit (por defecto /usr/local/cuda)"
 	@echo ""
 	@echo "Parametros de run:"
-	@echo "  BACKEND=<nombre>   seq, simd, cuda o fpga (por defecto seq)"
+	@echo "  BACKEND=<nombre>   seq, seq_sep, simd, cuda o fpga (por defecto seq)"
 	@echo "  SIZE=<N>           Lado de la imagen sintetica (por defecto 1024)"
 	@echo "  FILTER=<nombre>    gauss o sobel (por defecto gauss)"
 	@echo "  REPS=<N>           Repeticiones (por defecto 5)"
