@@ -59,7 +59,8 @@ TEST_SRCS := tests/test_validator.cpp \
              common/image.cpp \
              common/filter.cpp \
              common/validate.cpp \
-             backends/seq/seq_backend.cpp
+             backends/seq/seq_backend.cpp \
+             backends/seq/seq_separable_backend.cpp
 
 # Builds the test program and runs it, make fails if any test fails
 test: $(TEST_BIN)

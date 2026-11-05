@@ -1,4 +1,4 @@
-// Unit tests for Validate and the sequential baseline. Run with: make test
+// Unit tests for Validate, the sequential baseline and the separable baseline. Run with: make test
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -10,6 +10,8 @@
 
 // Defined in backends/seq/seq_backend.cpp
 std::unique_ptr<Backend> make_seq_backend();
+// Defined in backends/seq/seq_separable_backend.cpp
+std::unique_ptr<Backend> make_seq_separable_backend();
 
 namespace {
 
@@ -34,6 +36,14 @@ Image ConstantImage(int width, int height, uint8_t value) {
 // Runs the sequential baseline once
 Image RunSeq(const Image& input, const Filter& filter) {
     auto backend = make_seq_backend();
+    Image output;
+    backend->run(input, filter, output);
+    return output;
+}
+
+// Runs the separable baseline once
+Image RunSeqSeparable(const Image& input, const Filter& filter) {
+    auto backend = make_seq_separable_backend();
     Image output;
     backend->run(input, filter, output);
     return output;
@@ -110,6 +120,32 @@ void TestBaselineIsDeterministic() {
     }
 }
 
+// The 1D kernels multiplied together must rebuild the 2D weights table
+void TestSeparableKernelsMatchWeights() {
+    for (const Filter& filter : {make_gaussian5(), make_sobel_x3()}) {
+        CHECK(filter.col_weights.size() == static_cast<size_t>(filter.size));
+        CHECK(filter.row_weights.size() == static_cast<size_t>(filter.size));
+        for (int i = 0; i < filter.size; ++i) {
+            for (int j = 0; j < filter.size; ++j) {
+                CHECK(filter.col_weights[i] * filter.row_weights[j] == filter.weights[i * filter.size + j]);
+            }
+        }
+    }
+}
+
+// Separable must give the same image as the direct baseline, with tolerance 0.
+// These weights are exact in float, so the order of the sums does not change the result.
+// Sizes 1x1 and 2x3 are smaller than the kernel, so every neighbor is a border.
+void TestSeparableMatchesDirect() {
+    const int sizes[][2] = {{1, 1}, {2, 3}, {7, 13}, {64, 64}};
+    for (const Filter& filter : {make_gaussian5(), make_sobel_x3()}) {
+        for (const auto& size : sizes) {
+            const Image input = generate_synthetic(size[0], size[1], 42);
+            CHECK(Validate(RunSeq(input, filter), RunSeqSeparable(input, filter), 0).ok);
+        }
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -120,6 +156,8 @@ int main() {
     TestBaselineGaussConstantImage();
     TestBaselineSobelConstantImage();
     TestBaselineIsDeterministic();
+    TestSeparableKernelsMatchWeights();
+    TestSeparableMatchesDirect();
 
     if (failure_count == 0) {
         std::cout << "All tests passed\n";
