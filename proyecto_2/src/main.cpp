@@ -4,7 +4,7 @@
 // Uso:
 //   dlp_bench --backend seq --size 1024 [--filter gauss|sobel] [--reps 5]
 //             [--warmup 1] [--seed 42] [--input img.pgm] [--output out.pgm]
-//             [--validate [--tol N]] [--csv results.csv]
+//             [--validate [--tol N]] [--csv results.csv] [--hex-dir folder]
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -18,6 +18,7 @@
 
 #include "backends/backend.h"
 #include "common/filter.h"
+#include "common/hex.h"
 #include "common/image.h"
 #include "common/stats.h"
 #include "common/validate.h"
@@ -36,12 +37,13 @@ struct Options {
     bool validate = false;              // Compare against the baseline after timing
     int tolerance = 0;                  // Allowed per-pixel error for --validate
     std::string csv;                    // Empty = do not write a CSV file
+    std::string hex_dir;                // Empty = do not export .hex files
 };
 
 void usage() {
     std::cerr << "Uso: dlp_bench --backend <nombre> [--size N] [--filter gauss|sobel]\n"
                  "                 [--reps N] [--warmup N] [--seed N] [--input img.pgm] [--output out.pgm]\n"
-                 "                 [--validate [--tol N]] [--csv results.csv]\n"
+                 "                 [--validate [--tol N]] [--csv results.csv] [--hex-dir folder]\n"
                  "Backends compilados:";
     for (const auto& n : available_backends()) std::cerr << " " << n;
     std::cerr << "\n";
@@ -66,6 +68,7 @@ Options parse_args(int argc, char** argv) {
         else if (a == "--validate") o.validate = true;
         else if (a == "--tol") o.tolerance = std::stoi(next());
         else if (a == "--csv") o.csv = next();
+        else if (a == "--hex-dir") o.hex_dir = next();
         else if (a == "--help" || a == "-h") { usage(); std::exit(0); }
         else { std::cerr << "Opción desconocida: " << a << "\n"; usage(); std::exit(1); }
     }
@@ -134,6 +137,28 @@ void AppendCsvRow(const Options& opt, const Backend& backend, const Filter& filt
     file << "\n";
 }
 
+// Saves the input image and the backend output as .hex files inside opt.hex_dir.
+// Names: <filter>_<W>x<H>_<seed or input name>_in.hex and ..._<backend>_out.hex
+void ExportHex(const Options& opt, const Backend& backend, const Filter& filter,
+               const Image& input, const Image& output) {
+    // Step 1: make sure the folder exists
+    std::filesystem::create_directories(opt.hex_dir);
+
+    // Step 2: build the common part of the file names
+    const std::string source = opt.input.empty() ? "seed" + std::to_string(opt.seed)
+                                                 : std::filesystem::path(opt.input).stem().string();
+    const std::string base = filter.name + "_" + std::to_string(input.width) + "x" +
+                             std::to_string(input.height) + "_" + source;
+
+    // Step 3: write both files
+    const std::filesystem::path folder = opt.hex_dir;
+    const std::string input_path = (folder / (base + "_in.hex")).string();
+    const std::string output_path = (folder / (base + "_" + backend.name() + "_out.hex")).string();
+    WriteHex(input_path, input);
+    WriteHex(output_path, output);
+    std::cout << "Hex escrito en " << input_path << " y " << output_path << "\n";
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -186,11 +211,14 @@ int main(int argc, char** argv) {
         write_pgm(opt.output, output);
         std::cout << "Salida escrita en " << opt.output << "\n";
 
-        // Step 5: validate against the baseline if asked
+        // Step 5: export the input and the output as .hex if asked
+        if (!opt.hex_dir.empty()) ExportHex(opt, *backend, filter, input, output);
+
+        // Step 6: validate against the baseline if asked
         std::optional<ValidationResult> validation;
         if (opt.validate) validation = RunValidation(opt, input, filter, output);
 
-        // Step 6: save the row if asked (before any early exit, so failures are recorded too)
+        // Step 7: save the row if asked (before any early exit, so failures are recorded too)
         if (!opt.csv.empty()) AppendCsvRow(opt, *backend, filter, input, times, validation);
 
         // Exit code 3 when validation fails, so scripts can detect it
