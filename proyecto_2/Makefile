@@ -62,6 +62,7 @@ TEST_SRCS := tests/test_validator.cpp \
              common/filter.cpp \
              common/validate.cpp \
              common/stats.cpp \
+             common/hex.cpp \
              backends/seq/seq_backend.cpp \
              backends/seq/seq_separable_backend.cpp
 

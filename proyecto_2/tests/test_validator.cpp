@@ -1,11 +1,15 @@
-// Unit tests for Validate, the baselines and the statistics helpers. Run with: make test
+// Unit tests for Validate, the baselines, the statistics helpers and the hex files. Run with: make test
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "backends/backend.h"
 #include "common/filter.h"
+#include "common/hex.h"
 #include "common/image.h"
 #include "common/stats.h"
 #include "common/validate.h"
@@ -195,6 +199,81 @@ void TestStatsEmptyListThrows() {
     CHECK(stddev_threw);
 }
 
+// Temporary file for the hex tests, inside the system temp folder
+std::string HexTestPath() {
+    return (std::filesystem::temp_directory_path() / "dlp_test.hex").string();
+}
+
+// True if ReadHex rejects the file with an error
+bool ReadHexThrows(const std::string& path, int width, int height) {
+    try {
+        ReadHex(path, width, height);
+    } catch (const std::runtime_error&) {
+        return true;
+    }
+    return false;
+}
+
+// Write then read back: the image must come back identical, including a real baseline output
+void TestHexRoundTrip() {
+    const std::string path = HexTestPath();
+    const int sizes[][2] = {{1, 1}, {5, 3}, {16, 16}};
+    for (const auto& size : sizes) {
+        const Image image = generate_synthetic(size[0], size[1], 5);
+        WriteHex(path, image);
+        CHECK(Validate(image, ReadHex(path, size[0], size[1]), 0).ok);
+    }
+
+    const Image output = RunSeq(generate_synthetic(16, 16, 5), make_gaussian5());
+    WriteHex(path, output);
+    CHECK(Validate(output, ReadHex(path, 16, 16), 0).ok);
+    std::filesystem::remove(path);
+}
+
+// The file must have one line per pixel, two uppercase hex digits each, in row order
+void TestHexFormat() {
+    const std::string path = HexTestPath();
+    Image image(2, 2);
+    image.data = {0, 15, 255, 7};
+    WriteHex(path, image);
+
+    std::ifstream file(path);
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(file, line)) lines.push_back(line);
+    std::filesystem::remove(path);
+
+    CHECK(lines.size() == 4);
+    CHECK(lines.size() == 4 && lines[0] == "00" && lines[1] == "0F" && lines[2] == "FF" && lines[3] == "07");
+}
+
+// The file does not store the size: asking for a different size must fail, not guess
+void TestHexWrongSizeThrows() {
+    const std::string path = HexTestPath();
+    WriteHex(path, generate_synthetic(3, 2, 1));  // 6 lines
+    CHECK(ReadHexThrows(path, 4, 2));              // wants 8 lines: too few
+    CHECK(ReadHexThrows(path, 2, 2));              // wants 4 lines: too many
+    CHECK(!ReadHexThrows(path, 3, 2));             // wants 6 lines: fine
+    CHECK(!ReadHexThrows(path, 6, 1));             // same pixel count, any shape is accepted
+    std::filesystem::remove(path);
+}
+
+// Lines that are not exactly two hex digits must be rejected
+void TestHexBadLineThrows() {
+    const std::string path = HexTestPath();
+    const char* bad_files[] = {"00\nZZ\n", "00\n7\n", "00\n123\n", "00\n+1\n"};
+    for (const char* content : bad_files) {
+        std::ofstream(path) << content;
+        CHECK(ReadHexThrows(path, 2, 1));
+    }
+    std::filesystem::remove(path);
+}
+
+// A file that does not exist must be rejected
+void TestHexMissingFileThrows() {
+    CHECK(ReadHexThrows(HexTestPath() + ".missing", 1, 1));
+}
+
 }  // namespace
 
 int main() {
@@ -213,6 +292,11 @@ int main() {
     TestMedianIgnoresOutlier();
     TestStdDevKnownValue();
     TestStatsEmptyListThrows();
+    TestHexRoundTrip();
+    TestHexFormat();
+    TestHexWrongSizeThrows();
+    TestHexBadLineThrows();
+    TestHexMissingFileThrows();
 
     if (failure_count == 0) {
         std::cout << "All tests passed\n";
