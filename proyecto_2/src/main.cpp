@@ -1,18 +1,21 @@
 // dlp_bench: CLI del framework. Carga o genera una imagen, ejecuta un backend
-// N veces y reporta el tiempo de cada repetición.
+// N veces y reporta el tiempo de cada repetición y un resumen estadístico.
 //
 // Uso:
 //   dlp_bench --backend seq --size 1024 [--filter gauss|sobel] [--reps 5]
-//             [--seed 42] [--input img.pgm] [--output out.pgm]
+//             [--warmup 1] [--seed 42] [--input img.pgm] [--output out.pgm]
 //             [--validate [--tol N]]
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "backends/backend.h"
 #include "common/filter.h"
 #include "common/image.h"
+#include "common/stats.h"
 #include "common/validate.h"
 
 namespace {
@@ -24,6 +27,7 @@ struct Options {
     std::string output = "out.pgm";
     int size = 1024;
     int reps = 5;
+    int warmup = 1;                     // Untimed runs before measuring
     uint32_t seed = 42;
     bool validate = false;              // Compare against the baseline after timing
     int tolerance = 0;                  // Allowed per-pixel error for --validate
@@ -31,7 +35,7 @@ struct Options {
 
 void usage() {
     std::cerr << "Uso: dlp_bench --backend <nombre> [--size N] [--filter gauss|sobel]\n"
-                 "                 [--reps N] [--seed N] [--input img.pgm] [--output out.pgm]\n"
+                 "                 [--reps N] [--warmup N] [--seed N] [--input img.pgm] [--output out.pgm]\n"
                  "                 [--validate [--tol N]]\n"
                  "Backends compilados:";
     for (const auto& n : available_backends()) std::cerr << " " << n;
@@ -52,6 +56,7 @@ Options parse_args(int argc, char** argv) {
         else if (a == "--output") o.output = next();
         else if (a == "--size") o.size = std::stoi(next());
         else if (a == "--reps") o.reps = std::stoi(next());
+        else if (a == "--warmup") o.warmup = std::stoi(next());
         else if (a == "--seed") o.seed = static_cast<uint32_t>(std::stoul(next()));
         else if (a == "--validate") o.validate = true;
         else if (a == "--tol") o.tolerance = std::stoi(next());
@@ -80,10 +85,28 @@ bool RunValidation(const Options& opt, const Image& input, const Filter& filter,
     return result.ok;
 }
 
+// Prints one summary line with the statistics of the timed repetitions
+void PrintSummary(const Options& opt, const Backend& backend, const Filter& filter,
+                  const Image& input, const std::vector<double>& times) {
+    std::cout << "summary," << backend.name() << "," << filter.name << ","
+              << input.width << "x" << input.height
+              << ",reps=" << opt.reps << ",warmup=" << opt.warmup
+              << ",median=" << Median(times) << ",mean=" << Mean(times)
+              << ",stddev=" << StdDev(times)
+              << ",min=" << *std::min_element(times.begin(), times.end())
+              << ",max=" << *std::max_element(times.begin(), times.end()) << " ms\n";
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
     const Options opt = parse_args(argc, argv);
+
+    // Step 1: at least one timed repetition is needed to have statistics
+    if (opt.reps < 1 || opt.warmup < 0) {
+        std::cerr << "--reps must be at least 1 and --warmup cannot be negative\n";
+        return 1;
+    }
 
     try {
         auto backend = create_backend(opt.backend);
@@ -103,15 +126,25 @@ int main(int argc, char** argv) {
         Image output;
 
         backend->init(input, filter);
+
+        // Step 2: warm-up runs, not timed (caches, CPU frequency and memory settle)
+        for (int w = 0; w < opt.warmup; ++w) backend->run(input, filter, output);
+
+        // Step 3: timed repetitions, keep every time for the summary
+        std::vector<double> times;
         for (int r = 0; r < opt.reps; ++r) {
             const auto t0 = std::chrono::steady_clock::now();
             backend->run(input, filter, output);
             const auto t1 = std::chrono::steady_clock::now();
             const double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+            times.push_back(ms);
             std::cout << backend->name() << "," << filter.name << "," << input.width << "x"
                       << input.height << ",rep=" << r << "," << ms << " ms\n";
         }
         backend->cleanup();
+
+        // Step 4: summary of the timed repetitions
+        PrintSummary(opt, *backend, filter, input, times);
 
         write_pgm(opt.output, output);
         std::cout << "Salida escrita en " << opt.output << "\n";
