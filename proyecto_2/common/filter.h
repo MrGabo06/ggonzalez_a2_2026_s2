@@ -3,6 +3,11 @@
 #include <string>
 #include <vector>
 
+// Rules every backend must follow so all outputs can be compared with Validate:
+//  1. Border: a neighbor outside the image takes the value of the nearest edge pixel
+//     Example: for pixel (0, 0) and a 3x3 filter, the neighbor (-1, -1) is pixel (0, 0)
+//  2. Result: sum of weight * pixel, then absolute value (Sobel can be negative)
+//  3. Rounding: add 0.5 and truncate to integer, then saturate to 255
 struct Filter {
     std::string name;
     int size = 0;                 // lado del filtro (3 o 5), siempre impar
