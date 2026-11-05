@@ -27,22 +27,22 @@ Todos los backends implementan la misma interfaz y reciben la misma imagen y fil
 
 Terminado cuando `dlp_bench --backend seq --size 1024` corre y escribe una imagen de salida.
 
-- [ ] Estructura en `proyecto_2/`: `common/`, `backends/seq`, `backends/simd`, `backends/cuda`, `backends/fpga`, `scripts/`, `tests/`
-- [ ] Build con CMake y flags por backend (`-mavx2`, `-mavx512f`, `nvcc`) activables por opción
-- [ ] Interfaz común de backend: `init`, `run(imagen, filtro, salida)`, `cleanup`
-- [ ] Lectura y escritura de imágenes PGM en escala de grises y generador de imágenes sintéticas por tamaño y semilla
-- [ ] CLI con backend, tamaño, filtro, repeticiones y archivo de salida
-- [ ] Stub en backends/fpga que responde "no disponible", para que el runner funcione sin la tarjeta
+- [x] Estructura en `proyecto_2/`: `common/`, `backends/seq`, `backends/simd`, `backends/cuda`, `backends/fpga`, `scripts/`, `tests/`
+- [ ] Build con CMake y flags por backend (`-mavx2`, `-mavx512f`, `nvcc`) activables por opción (pendiente: se usa Makefile)
+- [x] Interfaz común de backend: `init`, `run(imagen, filtro, salida)`, `cleanup`
+- [x] Lectura y escritura de imágenes PGM en escala de grises y generador de imágenes sintéticas por tamaño y semilla
+- [x] CLI con backend, tamaño, filtro, repeticiones y archivo de salida
+- [x] Stub en backends/fpga que responde "no disponible", para que el runner funcione sin la tarjeta
 
 ### F2 · Baseline y validación (29 oct–5 nov)
 
 Terminado cuando el baseline produce resultados verificados y el runner genera un CSV con tiempos.
 
-- [ ] Baseline secuencial en dos variantes: convolución directa y separable, Gaussiano 5×5 y Sobel 3×3
-- [ ] Manejo de bordes definido (por ejemplo replicar el borde) y documentado, igual en todos los backends
-- [ ] Validador: compara contra el baseline píxel a píxel y reporta error máximo absoluto y PSNR
-- [ ] Runner de benchmarks: calentamiento, N repeticiones, mediana y desviación, salida en CSV
-- [ ] Exportar imágenes de prueba y salidas del baseline en formato .hex, para reutilizarlas después en la FPGA
+- [x] Baseline secuencial en dos variantes: convolución directa y separable, Gaussiano 5×5 y Sobel 3×3
+- [x] Manejo de bordes definido (por ejemplo replicar el borde) y documentado, igual en todos los backends
+- [x] Validador: compara contra el baseline píxel a píxel y reporta error máximo absoluto y PSNR
+- [x] Runner de benchmarks: calentamiento, N repeticiones, mediana y desviación, salida en CSV
+- [x] Exportar imágenes de prueba y salidas del baseline en formato .hex, para reutilizarlas después en la FPGA
 
 ### F3 · SIMD y GPU (6–19 nov, Demo 2)
 
