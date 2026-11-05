@@ -7,6 +7,10 @@ struct Filter {
     std::string name;
     int size = 0;                 // lado del filtro (3 o 5), siempre impar
     std::vector<float> weights;   // size * size coeficientes, fila por fila
+
+    // Separable form: weights[i * size + j] == col_weights[i] * row_weights[j]
+    std::vector<float> col_weights;  // Vertical kernel, one value per row offset
+    std::vector<float> row_weights;  // Horizontal kernel, one value per column offset
 };
 
 Filter make_gaussian5();   // Gaussiano 5x5 normalizado (suma 1)
