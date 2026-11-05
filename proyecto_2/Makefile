@@ -60,6 +60,7 @@ TEST_SRCS := tests/test_validator.cpp \
              common/image.cpp \
              common/filter.cpp \
              common/validate.cpp \
+             common/stats.cpp \
              backends/seq/seq_backend.cpp \
              backends/seq/seq_separable_backend.cpp
 

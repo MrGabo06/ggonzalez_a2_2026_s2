@@ -1,11 +1,13 @@
-// Unit tests for Validate, the sequential baseline and the separable baseline. Run with: make test
+// Unit tests for Validate, the baselines and the statistics helpers. Run with: make test
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 #include "backends/backend.h"
 #include "common/filter.h"
 #include "common/image.h"
+#include "common/stats.h"
 #include "common/validate.h"
 
 // Defined in backends/seq/seq_backend.cpp
@@ -146,6 +148,53 @@ void TestSeparableMatchesDirect() {
     }
 }
 
+// Mean of known lists
+void TestMeanKnownValue() {
+    CHECK(Mean({1, 2, 3, 4, 5}) == 3.0);
+    CHECK(Mean({7}) == 7.0);
+}
+
+// Odd count: the middle value. Even count: average of the two middle ones
+void TestMedianOddAndEven() {
+    CHECK(Median({5, 1, 3}) == 3.0);
+    CHECK(Median({4, 1, 3, 2}) == 2.5);
+    CHECK(Median({7}) == 7.0);
+}
+
+// Median sorts a copy, the caller's list must keep its order
+void TestMedianKeepsCallerList() {
+    const std::vector<double> values = {5, 1, 3};
+    Median(values);
+    CHECK(values[0] == 5.0 && values[1] == 1.0 && values[2] == 3.0);
+}
+
+// One slow repetition (16.0) drags the mean up but barely moves the median
+void TestMedianIgnoresOutlier() {
+    const std::vector<double> times = {12.7, 12.8, 13.0, 16.0};
+    CHECK(std::fabs(Median(times) - 12.9) < 1e-9);
+    CHECK(Mean(times) > 13.6);
+}
+
+// {1..5}: squared distances add up to 10, divided by 4 gives 2.5, square root of 2.5
+void TestStdDevKnownValue() {
+    CHECK(std::fabs(StdDev({1, 2, 3, 4, 5}) - std::sqrt(2.5)) < 1e-9);
+    CHECK(StdDev({7}) == 0.0);          // one value has no spread
+    CHECK(StdDev({4, 4, 4, 4}) == 0.0); // equal values have no spread
+}
+
+// An empty list has no mean, median or deviation
+void TestStatsEmptyListThrows() {
+    bool mean_threw = false;
+    bool median_threw = false;
+    bool stddev_threw = false;
+    try { Mean({}); } catch (const std::invalid_argument&) { mean_threw = true; }
+    try { Median({}); } catch (const std::invalid_argument&) { median_threw = true; }
+    try { StdDev({}); } catch (const std::invalid_argument&) { stddev_threw = true; }
+    CHECK(mean_threw);
+    CHECK(median_threw);
+    CHECK(stddev_threw);
+}
+
 }  // namespace
 
 int main() {
@@ -158,6 +207,12 @@ int main() {
     TestBaselineIsDeterministic();
     TestSeparableKernelsMatchWeights();
     TestSeparableMatchesDirect();
+    TestMeanKnownValue();
+    TestMedianOddAndEven();
+    TestMedianKeepsCallerList();
+    TestMedianIgnoresOutlier();
+    TestStdDevKnownValue();
+    TestStatsEmptyListThrows();
 
     if (failure_count == 0) {
         std::cout << "All tests passed\n";
