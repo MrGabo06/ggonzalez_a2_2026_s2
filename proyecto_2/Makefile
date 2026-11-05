@@ -26,10 +26,14 @@ SIMDFLAGS := -mavx2 -mfma
 SRCS := src/main.cpp \
         common/image.cpp \
         common/filter.cpp \
+        common/validate.cpp \
+        common/stats.cpp \
+        common/hex.cpp \
         backends/registry.cpp \
         backends/seq/seq_backend.cpp \
+        backends/seq/seq_separable_backend.cpp \
         backends/fpga/fpga_backend.cpp
-
+		
 ifeq ($(SIMD),1)
   SRCS     += backends/simd/simd_backend.cpp
   CXXFLAGS += -DDLP_HAS_SIMD
@@ -48,8 +52,27 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: build clean help run
+.PHONY: build clean help run test
 build: $(TARGET)
+
+# Unit tests: validator and sequential baseline (no special hardware needed)
+TEST_BIN  := $(BUILD)/test_validator
+TEST_SRCS := tests/test_validator.cpp \
+             common/image.cpp \
+             common/filter.cpp \
+             common/validate.cpp \
+             common/stats.cpp \
+             common/hex.cpp \
+             backends/seq/seq_backend.cpp \
+             backends/seq/seq_separable_backend.cpp
+
+# Builds the test program and runs it, make fails if any test fails
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
+$(TEST_BIN): $(TEST_SRCS)
+	@mkdir -p $(BUILD)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
@@ -81,6 +104,7 @@ help:
 	@echo "Objetivos:"
 	@echo "  build (por defecto) Compila build/dlp_bench"
 	@echo "  run                Compila si hace falta y ejecuta dlp_bench"
+	@echo "  test               Compila y ejecuta las pruebas del validador y del baseline"
 	@echo "  clean              Borra la carpeta build/"
 	@echo "  help               Muestra esta ayuda"
 	@echo ""
@@ -92,7 +116,7 @@ help:
 	@echo "  CUDA_PATH=<ruta>   Ruta del CUDA Toolkit (por defecto /usr/local/cuda)"
 	@echo ""
 	@echo "Parametros de run:"
-	@echo "  BACKEND=<nombre>   seq, simd, cuda o fpga (por defecto seq)"
+	@echo "  BACKEND=<nombre>   seq, seq_sep, simd, cuda o fpga (por defecto seq)"
 	@echo "  SIZE=<N>           Lado de la imagen sintetica (por defecto 1024)"
 	@echo "  FILTER=<nombre>    gauss o sobel (por defecto gauss)"
 	@echo "  REPS=<N>           Repeticiones (por defecto 5)"
