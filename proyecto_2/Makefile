@@ -27,11 +27,12 @@ SRCS := src/main.cpp \
         common/image.cpp \
         common/filter.cpp \
         common/validate.cpp \
+        common/stats.cpp \
         backends/registry.cpp \
         backends/seq/seq_backend.cpp \
         backends/seq/seq_separable_backend.cpp \
         backends/fpga/fpga_backend.cpp
-
+		
 ifeq ($(SIMD),1)
   SRCS     += backends/simd/simd_backend.cpp
   CXXFLAGS += -DDLP_HAS_SIMD
