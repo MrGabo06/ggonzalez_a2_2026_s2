@@ -4,11 +4,15 @@
 // Uso:
 //   dlp_bench --backend seq --size 1024 [--filter gauss|sobel] [--reps 5]
 //             [--warmup 1] [--seed 42] [--input img.pgm] [--output out.pgm]
-//             [--validate [--tol N]]
+//             [--validate [--tol N]] [--csv results.csv]
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -31,12 +35,13 @@ struct Options {
     uint32_t seed = 42;
     bool validate = false;              // Compare against the baseline after timing
     int tolerance = 0;                  // Allowed per-pixel error for --validate
+    std::string csv;                    // Empty = do not write a CSV file
 };
 
 void usage() {
     std::cerr << "Uso: dlp_bench --backend <nombre> [--size N] [--filter gauss|sobel]\n"
                  "                 [--reps N] [--warmup N] [--seed N] [--input img.pgm] [--output out.pgm]\n"
-                 "                 [--validate [--tol N]]\n"
+                 "                 [--validate [--tol N]] [--csv results.csv]\n"
                  "Backends compilados:";
     for (const auto& n : available_backends()) std::cerr << " " << n;
     std::cerr << "\n";
@@ -60,14 +65,15 @@ Options parse_args(int argc, char** argv) {
         else if (a == "--seed") o.seed = static_cast<uint32_t>(std::stoul(next()));
         else if (a == "--validate") o.validate = true;
         else if (a == "--tol") o.tolerance = std::stoi(next());
+        else if (a == "--csv") o.csv = next();
         else if (a == "--help" || a == "-h") { usage(); std::exit(0); }
         else { std::cerr << "Opción desconocida: " << a << "\n"; usage(); std::exit(1); }
     }
     return o;
 }
 
-// Compares the backend output against the sequential baseline, returns true if it passes
-bool RunValidation(const Options& opt, const Image& input, const Filter& filter, const Image& output) {
+// Compares the backend output against the sequential baseline and prints the report
+ValidationResult RunValidation(const Options& opt, const Image& input, const Filter& filter, const Image& output) {
     // Step 1: get the reference image from the sequential baseline
     auto baseline = create_backend("seq");
     Image reference;
@@ -82,7 +88,7 @@ bool RunValidation(const Options& opt, const Image& input, const Filter& filter,
               << ",max=" << result.max_abs_error << ",diff=" << result.differing_pixels
               << ",mse=" << result.mse << ",psnr=" << result.psnr
               << ",ok=" << result.ok << "\n";
-    return result.ok;
+    return result;
 }
 
 // Prints one summary line with the statistics of the timed repetitions
@@ -95,6 +101,37 @@ void PrintSummary(const Options& opt, const Backend& backend, const Filter& filt
               << ",stddev=" << StdDev(times)
               << ",min=" << *std::min_element(times.begin(), times.end())
               << ",max=" << *std::max_element(times.begin(), times.end()) << " ms\n";
+}
+
+// Appends one row to the CSV file, the header goes first only if the file is new.
+// Validation columns stay empty when --validate was not used
+void AppendCsvRow(const Options& opt, const Backend& backend, const Filter& filter,
+                  const Image& input, const std::vector<double>& times,
+                  const std::optional<ValidationResult>& validation) {
+    // Step 1: the file is new if it does not exist or is empty
+    const bool is_new = !std::filesystem::exists(opt.csv) || std::filesystem::file_size(opt.csv) == 0;
+
+    // Step 2: open in append mode, so earlier rows are kept
+    std::ofstream file(opt.csv, std::ios::app);
+    if (!file) throw std::runtime_error("cannot open CSV file: " + opt.csv);
+
+    // Step 3: header only once
+    if (is_new) {
+        file << "backend,filter,width,height,reps,warmup,median_ms,mean_ms,stddev_ms,min_ms,max_ms,"
+                "max_abs_error,psnr,ok\n";
+    }
+
+    // Step 4: one row for this run
+    file << backend.name() << "," << filter.name << "," << input.width << "," << input.height
+         << "," << opt.reps << "," << opt.warmup << "," << Median(times) << "," << Mean(times)
+         << "," << StdDev(times) << "," << *std::min_element(times.begin(), times.end())
+         << "," << *std::max_element(times.begin(), times.end()) << ",";
+    if (validation) {
+        file << validation->max_abs_error << "," << validation->psnr << "," << validation->ok;
+    } else {
+        file << ",,";
+    }
+    file << "\n";
 }
 
 }  // namespace
@@ -149,8 +186,15 @@ int main(int argc, char** argv) {
         write_pgm(opt.output, output);
         std::cout << "Salida escrita en " << opt.output << "\n";
 
+        // Step 5: validate against the baseline if asked
+        std::optional<ValidationResult> validation;
+        if (opt.validate) validation = RunValidation(opt, input, filter, output);
+
+        // Step 6: save the row if asked (before any early exit, so failures are recorded too)
+        if (!opt.csv.empty()) AppendCsvRow(opt, *backend, filter, input, times, validation);
+
         // Exit code 3 when validation fails, so scripts can detect it
-        if (opt.validate && !RunValidation(opt, input, filter, output)) return 3;
+        if (validation && !validation->ok) return 3;
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
