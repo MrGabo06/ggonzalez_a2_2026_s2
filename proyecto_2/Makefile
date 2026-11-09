@@ -2,6 +2,7 @@
 
 CXX      ?= g++
 NVCC     ?= nvcc
+NVCCFLAGS ?= -arch=native   # compila para la GPU de esta máquina (CUDA 11.6 o más)
 CUDA_PATH ?= /usr/local/cuda
 
 BUILD    := build
@@ -52,7 +53,7 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: build clean help run test
+.PHONY: build clean help run test test_backends
 build: $(TARGET)
 
 # Unit tests: validator and sequential baseline (no special hardware needed)
@@ -74,6 +75,17 @@ $(TEST_BIN): $(TEST_SRCS)
 	@mkdir -p $(BUILD)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
+# Prueba todos los backends compilados contra seq (use SIMD=1, AVX512=1 o CUDA=1 para
+# incluirlos). Falla si algún backend no da exactamente la misma imagen que seq.
+TEST_BACKENDS_BIN := $(BUILD)/test_backends
+LIB_OBJS := $(filter-out $(BUILD)/src/main.o,$(OBJS))
+
+test_backends: $(TEST_BACKENDS_BIN)
+	./$(TEST_BACKENDS_BIN)
+
+$(TEST_BACKENDS_BIN): $(BUILD)/tests/test_backends.o $(LIB_OBJS)
+	$(CXX) $^ -o $@ $(LDFLAGS)
+
 $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 
@@ -92,7 +104,7 @@ $(BUILD)/%.o: %.cpp
 
 $(BUILD)/%.o: %.cu
 	@mkdir -p $(dir $@)
-	$(NVCC) -std=c++17 -O2 -I. $(filter -D%,$(CXXFLAGS)) -c $< -o $@
+	$(NVCC) -std=c++17 -O2 $(NVCCFLAGS) -I. $(filter -D%,$(CXXFLAGS)) -c $< -o $@
 
 # Compila si hace falta y ejecuta el benchmark
 run: $(TARGET)
@@ -108,6 +120,7 @@ help:
 	@echo "  build (por defecto) Compila build/dlp_bench"
 	@echo "  run                Compila si hace falta y ejecuta dlp_bench"
 	@echo "  test               Compila y ejecuta las pruebas del validador y del baseline"
+	@echo "  test_backends      Prueba todos los backends compilados contra seq (tolerancia 0)"
 	@echo "  clean              Borra la carpeta build/"
 	@echo "  help               Muestra esta ayuda"
 	@echo ""

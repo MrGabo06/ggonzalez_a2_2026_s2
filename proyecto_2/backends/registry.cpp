@@ -14,6 +14,7 @@ std::unique_ptr<Backend> make_simd_separable512_backend();
 #endif
 #ifdef DLP_HAS_CUDA
 std::unique_ptr<Backend> make_cuda_backend();
+std::unique_ptr<Backend> make_cuda_tiled_backend();
 #endif
 
 std::unique_ptr<Backend> create_backend(const std::string& name) {
@@ -30,6 +31,7 @@ std::unique_ptr<Backend> create_backend(const std::string& name) {
 #endif
 #ifdef DLP_HAS_CUDA
     if (name == "cuda") return make_cuda_backend();
+    if (name == "cuda_tiled") return make_cuda_tiled_backend();
 #endif
     return nullptr;
 }
@@ -46,6 +48,7 @@ std::vector<std::string> available_backends() {
 #endif
 #ifdef DLP_HAS_CUDA
     names.push_back("cuda");
+    names.push_back("cuda_tiled");
 #endif
     return names;
 }
