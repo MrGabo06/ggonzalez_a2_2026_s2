@@ -2,6 +2,7 @@
 
 CXX      ?= g++
 NVCC     ?= nvcc
+NVCCFLAGS ?= -arch=native   # compila para la GPU de esta máquina (CUDA 11.6 o más)
 CUDA_PATH ?= /usr/local/cuda
 
 BUILD    := build
@@ -92,7 +93,7 @@ $(BUILD)/%.o: %.cpp
 
 $(BUILD)/%.o: %.cu
 	@mkdir -p $(dir $@)
-	$(NVCC) -std=c++17 -O2 -I. $(filter -D%,$(CXXFLAGS)) -c $< -o $@
+	$(NVCC) -std=c++17 -O2 $(NVCCFLAGS) -I. $(filter -D%,$(CXXFLAGS)) -c $< -o $@
 
 # Compila si hace falta y ejecuta el benchmark
 run: $(TARGET)

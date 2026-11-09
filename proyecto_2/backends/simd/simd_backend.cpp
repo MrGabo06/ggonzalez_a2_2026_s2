@@ -1,19 +1,3 @@
-// Backends SIMD con AVX2.
-//
-//  - "simd":     propuesta 1, convolución directa (una pasada 2D).
-//  - "simd_sep": propuesta 2, convolución separable (dos pasadas 1D).
-//
-// Descomposición: por dominio de datos. Cada píxel de salida es independiente,
-// así que se vectorizan 8 píxeles contiguos de una fila (eje x) por iteración.
-// Una fila de la imagen es contigua en memoria, por eso los 8 vecinos de cada tap
-// se leen con una sola carga.
-//
-// Reglas de los backends (ver common/filter.h): borde con clamp, valor absoluto,
-// +0.5, saturar a 255 y truncar. Para que la salida sea igual al baseline:
-//  - Los píxeles del borde izquierdo y la cola de cada fila usan código escalar.
-//  - Los bloques interiores (todos sus vecinos dentro de la imagen) usan AVX2.
-//  - Los pesos son exactos en float, por eso el orden de las sumas y el FMA no
-//    cambian el resultado (se valida con tolerancia 0).
 #include <immintrin.h>
 
 #include <algorithm>
