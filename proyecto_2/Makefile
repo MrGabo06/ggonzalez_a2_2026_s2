@@ -38,8 +38,8 @@ ifeq ($(SIMD),1)
   SRCS     += backends/simd/simd_backend.cpp
   CXXFLAGS += -DDLP_HAS_SIMD
   ifeq ($(AVX512),1)
-    CXXFLAGS  += -DDLP_HAS_AVX512
-    SIMDFLAGS += -mavx512f
+    SRCS     += backends/simd/simd512_backend.cpp
+    CXXFLAGS += -DDLP_HAS_AVX512
   endif
 endif
 
@@ -77,8 +77,11 @@ $(TEST_BIN): $(TEST_SRCS)
 $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 
-# Solo el archivo SIMD lleva -mavx2/-mavx512f, para que el resto del
-# binario no use esas instrucciones por accidente.
+# Solo los archivos SIMD llevan -mavx2/-mavx512f, para que el resto del
+# binario no use esas instrucciones por accidente. -mavx512f va solo en el archivo
+# AVX-512, así el código AVX2 nunca usa instrucciones que una CPU sin AVX-512 no tiene.
+$(BUILD)/backends/simd/simd512_backend.o: SIMDFLAGS := -mavx2 -mfma -mavx512f
+
 $(BUILD)/backends/simd/%.o: backends/simd/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(SIMDFLAGS) -MMD -MP -c $< -o $@
