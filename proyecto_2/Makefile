@@ -59,7 +59,7 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: help build clean clean_results run test test_backends bench analyze report
+.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu
 build: $(TARGET)
 
 # Unit tests: validator and sequential baseline (no special hardware needed)
@@ -146,6 +146,27 @@ report:
 	$(MAKE) -j$(JOBS) bench $(AUTO_FLAGS)
 	$(MAKE) analyze
 
+# ---- F4: perfilado -------------------------------------------------------------------
+# make profile      perf (CPU) y Nsight Compute (GPU): detecta el hardware, compila y perfila.
+#                   Escribe results/perfilado/<maquina>_perfilado.md. Puede pedir la contrasena
+#                   de sudo (contadores de CPU o de GPU). Lo que la maquina no tenga se omite.
+# make profile_cpu  solo perf          make profile_gpu  solo Nsight Compute
+# Opcional: PROF_SIZES="1024 4096" PROF_GPU_SIZE=4096 PROF_BACKENDS="seq simd"
+PROFILE_MODE ?= all
+
+profile:
+	@echo "Opciones detectadas: $(AUTO_FLAGS)"
+	$(MAKE) clean
+	rm -rf results/perfilado/$(BENCH_HOST)_*
+	$(MAKE) -j$(JOBS) build $(AUTO_FLAGS)
+	bash scripts/run_profile.sh $(PROFILE_MODE)
+
+profile_cpu:
+	$(MAKE) profile PROFILE_MODE=cpu
+
+profile_gpu:
+	$(MAKE) profile PROFILE_MODE=gpu
+
 # Borra TODOS los resultados, también los de otras máquinas (cuidado si ya los commiteó)
 clean_results:
 	rm -rf results
@@ -166,6 +187,8 @@ help:
 	@echo "  make analyze          Tablas y graficas en results/figuras/ desde los CSV"
 	@echo "  make report           Todo F4: detecta el hardware, compila, mide y genera graficas"
 	@echo "                        (borra antes los resultados anteriores de esta maquina)"
+	@echo "  make profile          Perfilado: perf (CPU) y Nsight Compute (GPU), resumen en results/perfilado/"
+	@echo "  make profile_cpu      Solo perf          make profile_gpu   Solo Nsight Compute"
 	@echo "  make clean            Borra la carpeta build/"
 	@echo "  make clean_results    Borra la carpeta results/ completa (todas las maquinas)"
 	@echo ""

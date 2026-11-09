@@ -48,21 +48,21 @@ Terminado cuando el baseline produce resultados verificados y el runner genera u
 
 Terminado cuando SIMD y CUDA tienen sus 2 propuestas y ambas pasan el validador.
 
-- [ ] SIMD propuesta 1: convolución directa con intrinsics AVX2
-- [ ] SIMD propuesta 2: convolución separable y variante AVX-512 (Intel 11va gen); comparar contra AVX2 en la 9na gen
-- [ ] CUDA propuesta 1: un hilo por píxel leyendo de memoria global
-- [ ] CUDA propuesta 2: tiles en memoria compartida con halo y tamaño de bloque configurable
-- [ ] Runner llama a seq, SIMD y CUDA con el mismo comando
-- [ ] Pruebas de correctitud automatizadas para los 3 backends y varios tamaños
+- [x] SIMD propuesta 1: convolución directa con intrinsics AVX2
+- [x] SIMD propuesta 2: convolución separable y variante AVX-512 (Intel 11va gen); comparar contra AVX2 en la 9na gen
+- [x] CUDA propuesta 1: un hilo por píxel leyendo de memoria global
+- [x] CUDA propuesta 2: tiles en memoria compartida con halo y tamaño de bloque configurable
+- [x] Runner llama a seq, SIMD y CUDA con el mismo comando
+- [x] Pruebas de correctitud automatizadas para los 3 backends y varios tamaños
 
 ### F4 · Medición de CPU y GPU (20–26 nov)
 
 Terminado cuando un solo script produce las tablas y gráficas de CPU y GPU.
 
-- [ ] Barrido de tamaños (por ejemplo 512², 1024², 2048², 4096²) en todas las máquinas
-- [ ] Cálculo automático de speedup, eficiencia paralela y escalabilidad desde los CSV
-- [ ] Perfilado: perf o VTune en CPU y Nsight Compute en GPU
-- [ ] Tabla de diferencias numéricas CPU vs. GPU
+- [ ] Barrido de tamaños (por ejemplo 512², 1024², 2048², 4096²) en todas las máquinas (hecho en msi-ema con `make report`; faltan las demás)
+- [x] Cálculo automático de speedup, eficiencia paralela y escalabilidad desde los CSV
+- [x] Perfilado: perf o VTune en CPU y Nsight Compute en GPU (`make profile`)
+- [x] Tabla de diferencias numéricas CPU vs. GPU
 - [ ] Opcional: misma corrida en GPU integrada (OpenCL en Intel o Metal en el M3)
 
 ### F5 · Acelerador FPGA (en cuanto haya acceso a la tarjeta, a más tardar 27 nov–3 dic)

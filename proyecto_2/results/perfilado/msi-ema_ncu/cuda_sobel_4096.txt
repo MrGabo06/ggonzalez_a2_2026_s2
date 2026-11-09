@@ -1,0 +1,126 @@
+==PROF== Connected to process 36746 (/home/emarojass/Escritorio/ARQUI/ggonzalez_a2_2026_s2/proyecto_2/build/dlp_bench)
+==PROF== Profiling "ConvolveGlobal" - 0 (1/1): 0%....50%....100% - 17 passes
+cuda,sobel,4096x4096,rep=0,965.894 ms
+summary,cuda,sobel,4096x4096,reps=1,warmup=0,median=965.894,mean=965.894,stddev=0,min=965.894,max=965.894 ms
+kernel,cuda,sobel,4096x4096,median=952.342,mean=952.342,stddev=0,min=952.342,max=952.342 ms
+Salida escrita en /dev/null
+==PROF== Disconnected from process 36746
+[36746] dlp_bench@127.0.0.1
+  <unnamed>::ConvolveGlobal(const unsigned char *, unsigned char *, int, int, const float *, int) (256, 256, 1)x(16, 16, 1), Context 1, Stream 7, Device 0, CC 8.6
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ------------- ------------
+    Metric Name               Metric Unit Metric Value
+    ----------------------- ------------- ------------
+    DRAM Frequency          cycle/nsecond         5.99
+    SM Frequency            cycle/usecond       817.49
+    Elapsed Cycles                  cycle       911278
+    Memory Throughput                   %        80.60
+    DRAM Throughput                     %        10.42
+    Duration                      msecond         1.11
+    L1/TEX Cache Throughput             %        80.76
+    L2 Cache Throughput                 %        17.82
+    SM Active Cycles                cycle    908857.73
+    Compute (SM) Throughput             %        80.60
+    ----------------------- ------------- ------------
+
+    INF   The kernel is utilizing greater than 80.0% of the available compute or memory performance of the device. To   
+          further improve performance, work will likely need to be shifted from the most utilized to another unit.      
+          Start by analyzing workloads in the Compute Workload Analysis section.                                        
+
+    Section: Compute Workload Analysis
+    -------------------- ----------- ------------
+    Metric Name          Metric Unit Metric Value
+    -------------------- ----------- ------------
+    Executed Ipc Active   inst/cycle         3.15
+    Executed Ipc Elapsed  inst/cycle         3.15
+    Issue Slots Busy               %        78.85
+    Issued Ipc Active     inst/cycle         3.15
+    SM Busy                        %        78.85
+    -------------------- ----------- ------------
+
+    OPT   ALU is the highest-utilized pipeline (60.6%) based on active cycles, taking into account the rates of its     
+          different instructions. It executes integer and logic operations. The pipeline is well-utilized, but might    
+          become a bottleneck if more work is added. Based on the number of executed instructions, the highest          
+          utilized pipeline (80.8%) is LSU. It executes load/store memory operations. Comparing the two, the overall    
+          pipeline utilization appears to be caused by frequent, low-latency instructions. See the Kernel Profiling     
+          Guide (https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#metrics-decoder) or hover over the    
+          pipeline name to understand the workloads handled by each pipeline. The Instruction Statistics section shows  
+          the mix of executed instructions in this kernel. Check the Warp State Statistics section for which reasons    
+          cause warps to stall.                                                                                         
+
+    Section: Memory Workload Analysis
+    --------------------------- ------------ ------------
+    Metric Name                  Metric Unit Metric Value
+    --------------------------- ------------ ------------
+    Memory Throughput           Gbyte/second        30.00
+    Mem Busy                               %        63.00
+    Max Bandwidth                          %        80.60
+    L1/TEX Hit Rate                        %        83.38
+    L2 Compression Success Rate            %            0
+    L2 Compression Ratio                                0
+    L2 Hit Rate                            %        83.54
+    Mem Pipes Busy                         %        80.60
+    --------------------------- ------------ ------------
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle        10.98
+    Warp Cycles Per Executed Instruction           cycle        10.98
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    31.41
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst    716526.93
+    Executed Instructions                           inst     85983232
+    Avg. Issued Instructions Per Scheduler          inst    716603.06
+    Issued Instructions                             inst     85992367
+    ---------------------------------------- ----------- ------------
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   256
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                  65536
+    Registers Per Thread             register/thread              40
+    Shared Memory Configuration Size           Kbyte            8.19
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block       byte/block               0
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              30
+    Threads                                   thread        16777216
+    Uses Green Context                                             0
+    Waves Per SM                                              364.09
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Block Limit SM                        block           16
+    Block Limit Registers                 block            6
+    Block Limit Shared Mem                block            8
+    Block Limit Warps                     block            6
+    Theoretical Active Warps per SM        warp           48
+    Theoretical Occupancy                     %          100
+    Achieved Occupancy                        %        72.96
+    Achieved Active Warps Per SM           warp        35.02
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 27.04%                                                                                    
+          The difference between calculated theoretical (100.0%) and measured achieved occupancy (73.0%) can be the     
+          result of warp scheduling overheads or workload imbalances during the kernel execution. Load imbalances can   
+          occur between warps within a block as well as across blocks of the same kernel. See the CUDA Best Practices   
+          Guide (https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#occupancy) for more details on     
+          optimizing occupancy.                                                                                         
+
