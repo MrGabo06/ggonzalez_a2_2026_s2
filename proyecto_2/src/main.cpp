@@ -106,10 +106,25 @@ void PrintSummary(const Options& opt, const Backend& backend, const Filter& filt
               << ",max=" << *std::max_element(times.begin(), times.end()) << " ms\n";
 }
 
+// Prints the statistics of the device-only time (GPU kernel without memory copies).
+// Only backends that measure it (CUDA) report it, the CPU ones return nothing.
+void PrintKernelSummary(const Backend& backend, const Filter& filter, const Image& input,
+                        const std::vector<double>& kernel_times) {
+    if (kernel_times.empty()) return;
+    std::cout << "kernel," << backend.name() << "," << filter.name << ","
+              << input.width << "x" << input.height
+              << ",median=" << Median(kernel_times) << ",mean=" << Mean(kernel_times)
+              << ",stddev=" << StdDev(kernel_times)
+              << ",min=" << *std::min_element(kernel_times.begin(), kernel_times.end())
+              << ",max=" << *std::max_element(kernel_times.begin(), kernel_times.end()) << " ms\n";
+}
+
 // Appends one row to the CSV file, the header goes first only if the file is new.
-// Validation columns stay empty when --validate was not used
+// Validation columns stay empty when --validate was not used, and so do the kernel
+// columns for backends that do not measure the device-only time (CPU)
 void AppendCsvRow(const Options& opt, const Backend& backend, const Filter& filter,
                   const Image& input, const std::vector<double>& times,
+                  const std::vector<double>& kernel_times,
                   const std::optional<ValidationResult>& validation) {
     // Step 1: the file is new if it does not exist or is empty
     const bool is_new = !std::filesystem::exists(opt.csv) || std::filesystem::file_size(opt.csv) == 0;
@@ -121,7 +136,7 @@ void AppendCsvRow(const Options& opt, const Backend& backend, const Filter& filt
     // Step 3: header only once
     if (is_new) {
         file << "backend,filter,width,height,reps,warmup,median_ms,mean_ms,stddev_ms,min_ms,max_ms,"
-                "max_abs_error,psnr,ok\n";
+                "max_abs_error,psnr,ok,kernel_median_ms,kernel_stddev_ms\n";
     }
 
     // Step 4: one row for this run
@@ -133,6 +148,11 @@ void AppendCsvRow(const Options& opt, const Backend& backend, const Filter& filt
         file << validation->max_abs_error << "," << validation->psnr << "," << validation->ok;
     } else {
         file << ",,";
+    }
+    if (kernel_times.empty()) {
+        file << ",,";
+    } else {
+        file << "," << Median(kernel_times) << "," << StdDev(kernel_times);
     }
     file << "\n";
 }
@@ -194,12 +214,14 @@ int main(int argc, char** argv) {
 
         // Step 3: timed repetitions, keep every time for the summary
         std::vector<double> times;
+        std::vector<double> kernel_times;  // stays empty for backends without device timing
         for (int r = 0; r < opt.reps; ++r) {
             const auto t0 = std::chrono::steady_clock::now();
             backend->run(input, filter, output);
             const auto t1 = std::chrono::steady_clock::now();
             const double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
             times.push_back(ms);
+            if (backend->kernel_ms() >= 0.0) kernel_times.push_back(backend->kernel_ms());
             std::cout << backend->name() << "," << filter.name << "," << input.width << "x"
                       << input.height << ",rep=" << r << "," << ms << " ms\n";
         }
@@ -207,6 +229,7 @@ int main(int argc, char** argv) {
 
         // Step 4: summary of the timed repetitions
         PrintSummary(opt, *backend, filter, input, times);
+        PrintKernelSummary(*backend, filter, input, kernel_times);
 
         write_pgm(opt.output, output);
         std::cout << "Salida escrita en " << opt.output << "\n";
@@ -219,7 +242,7 @@ int main(int argc, char** argv) {
         if (opt.validate) validation = RunValidation(opt, input, filter, output);
 
         // Step 7: save the row if asked (before any early exit, so failures are recorded too)
-        if (!opt.csv.empty()) AppendCsvRow(opt, *backend, filter, input, times, validation);
+        if (!opt.csv.empty()) AppendCsvRow(opt, *backend, filter, input, times, kernel_times, validation);
 
         // Exit code 3 when validation fails, so scripts can detect it
         if (validation && !validation->ok) return 3;

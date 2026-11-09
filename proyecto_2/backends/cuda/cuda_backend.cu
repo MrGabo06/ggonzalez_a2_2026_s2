@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -111,6 +112,39 @@ __global__ void ConvolveTiled(const uint8_t* in, uint8_t* out, int w, int h, int
 }
 // TILED-END
 
+// Mide con eventos de CUDA cuánto tarda el kernel en la GPU, sin las copias de memoria.
+// Se crea en init() y no en el constructor: así, sin GPU, el backend responde "no
+// disponible" en vez de fallar al crearse.
+class KernelTimer {
+public:
+    KernelTimer() {
+        CUDA_CHECK(cudaEventCreate(&start_));
+        CUDA_CHECK(cudaEventCreate(&stop_));
+    }
+    ~KernelTimer() {
+        cudaEventDestroy(start_);
+        cudaEventDestroy(stop_);
+    }
+    KernelTimer(const KernelTimer&) = delete;
+    KernelTimer& operator=(const KernelTimer&) = delete;
+
+    void Start() { CUDA_CHECK(cudaEventRecord(start_)); }
+
+    // Espera a que termine el kernel y devuelve su duración en ms
+    double Stop() {
+        CUDA_CHECK(cudaEventRecord(stop_));
+        CUDA_CHECK(cudaEventSynchronize(stop_));
+        float ms = 0.0f;
+        CUDA_CHECK(cudaEventElapsedTime(&ms, start_, stop_));
+        return ms;
+    }
+
+private:
+    cudaEvent_t start_ = nullptr;
+    cudaEvent_t stop_ = nullptr;
+};
+
+
 class CudaBackend : public Backend {
 public:
     ~CudaBackend() override { Release(); }
@@ -126,6 +160,7 @@ public:
     // Reserva la memoria de la GPU y sube los pesos del filtro (una sola vez).
     void init(const Image& input, const Filter& f) override {
         Release();
+        timer_ = std::make_unique<KernelTimer>();
         width_ = input.width;
         height_ = input.height;
         pixels_ = static_cast<size_t>(width_) * height_;
@@ -148,16 +183,22 @@ public:
 
         // Imagen a la GPU, kernel y resultado de vuelta (la copia final espera al kernel)
         CUDA_CHECK(cudaMemcpy(d_in_, in.data.data(), pixels_, cudaMemcpyHostToDevice));
+        timer_->Start();
         ConvolveGlobal<<<grid, block>>>(d_in_, d_out_, width_, height_, d_weights_, f.size);
         CUDA_CHECK(cudaGetLastError());
+        kernel_ms_ = timer_->Stop();
         CUDA_CHECK(cudaMemcpy(out.data.data(), d_out_, pixels_, cudaMemcpyDeviceToHost));
     }
 
     void cleanup() override { Release(); }
 
+    // Solo el kernel, sin las copias de la imagen (ver KernelTimer)
+    double kernel_ms() const override { return kernel_ms_; }
+
 private:
     // Libera la memoria de la GPU. No lanza excepciones, también se usa en el destructor.
     void Release() {
+        timer_.reset();
         cudaFree(d_in_);
         cudaFree(d_out_);
         cudaFree(d_weights_);
@@ -170,6 +211,8 @@ private:
     int height_ = 0;
     size_t pixels_ = 0;
     uint8_t* d_in_ = nullptr;
+    std::unique_ptr<KernelTimer> timer_;
+    double kernel_ms_ = -1.0;
     uint8_t* d_out_ = nullptr;
     float* d_weights_ = nullptr;
 };
@@ -189,6 +232,7 @@ public:
     // Reserva la memoria de la GPU y sube los pesos a memoria constante (una vez).
     void init(const Image& input, const Filter& f) override {
         Release();
+        timer_ = std::make_unique<KernelTimer>();
         if (f.size * f.size > kMaxWeights) {
             throw std::runtime_error("CUDA: el filtro es mas grande que 5x5");
         }
@@ -215,12 +259,17 @@ public:
         const size_t shared_bytes = static_cast<size_t>(block_x_ + 2 * r) * (block_y_ + 2 * r);
 
         CUDA_CHECK(cudaMemcpy(d_in_, in.data.data(), pixels_, cudaMemcpyHostToDevice));
+        timer_->Start();
         ConvolveTiled<<<grid, block, shared_bytes>>>(d_in_, d_out_, width_, height_, f.size);
         CUDA_CHECK(cudaGetLastError());
+        kernel_ms_ = timer_->Stop();
         CUDA_CHECK(cudaMemcpy(out.data.data(), d_out_, pixels_, cudaMemcpyDeviceToHost));
     }
 
     void cleanup() override { Release(); }
+
+    // Solo el kernel, sin las copias de la imagen (ver KernelTimer)
+    double kernel_ms() const override { return kernel_ms_; }
 
 private:
     // Lee DLP_CUDA_BLOCK=<x>x<y>. Si falta o no es válida, deja 16x16.
@@ -238,6 +287,7 @@ private:
     }
 
     void Release() {
+        timer_.reset();
         cudaFree(d_in_);
         cudaFree(d_out_);
         d_in_ = nullptr;
@@ -250,6 +300,8 @@ private:
     int height_ = 0;
     size_t pixels_ = 0;
     uint8_t* d_in_ = nullptr;
+    std::unique_ptr<KernelTimer> timer_;
+    double kernel_ms_ = -1.0;
     uint8_t* d_out_ = nullptr;
 };
 
