@@ -39,17 +39,20 @@ SRCS := src/main.cpp \
         backends/fpga/fpga_backend.cpp
 		
 ifeq ($(SIMD),1)
-  SRCS     += backends/simd/simd_backend.cpp
+  SRCS     += backends/simd/simd_backend.cpp \
+              backends/simd/simd_separable_backend.cpp
   CXXFLAGS += -DDLP_HAS_SIMD
   ifeq ($(AVX512),1)
-    SRCS     += backends/simd/simd512_backend.cpp
+    SRCS     += backends/simd/simd512_backend.cpp \
+                backends/simd/simd512_separable_backend.cpp
     CXXFLAGS += -DDLP_HAS_AVX512
   endif
 endif
 
 CU_SRCS :=
 ifeq ($(CUDA),1)
-  CU_SRCS  += backends/cuda/cuda_backend.cu
+  CU_SRCS  += backends/cuda/cuda_backend.cu \
+              backends/cuda/cuda_tiled_backend.cu
   CXXFLAGS += -DDLP_HAS_CUDA
   LDFLAGS  += -L$(CUDA_PATH)/lib64 -lcudart
 endif
@@ -95,7 +98,7 @@ $(TARGET): $(OBJS)
 # Solo los archivos SIMD llevan -mavx2/-mavx512f, para que el resto del
 # binario no use esas instrucciones por accidente. -mavx512f va solo en el archivo
 # AVX-512, así el código AVX2 nunca usa instrucciones que una CPU sin AVX-512 no tiene.
-$(BUILD)/backends/simd/simd512_backend.o: SIMDFLAGS := -mavx2 -mfma -mavx512f
+$(BUILD)/backends/simd/simd512%.o: SIMDFLAGS := -mavx2 -mfma -mavx512f
 
 $(BUILD)/backends/simd/%.o: backends/simd/%.cpp
 	@mkdir -p $(dir $@)
@@ -127,7 +130,7 @@ JOBS       ?= $(shell nproc 2>/dev/null || echo 1)
 BENCH_HOST := $(shell hostname)
 
 bench: $(TARGET)
-	bash scripts/run_bench.sh
+	scripts/run_bench.sh
 
 analyze:
 	python3 scripts/analyze.py
