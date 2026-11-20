@@ -59,7 +59,7 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu
+.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave
 build: $(TARGET)
 
 # Unit tests: validator and sequential baseline (no special hardware needed)
@@ -167,6 +167,26 @@ profile_cpu:
 profile_gpu:
 	$(MAKE) profile PROFILE_MODE=gpu
 
+# ---- F5: procesador vectorial para la FPGA (simulación con Icarus Verilog) ---------------
+# make fpga_sim   ensambla el programa, simula el RTL y compara contra la salida de seq
+# make fpga_test  prueba del ISA + ejecución dummy + Gauss y Sobel en dos tamaños
+FPGA_SIM := python3 fpga/scripts/run_sim.py
+
+fpga_sim: $(TARGET)
+	$(FPGA_SIM) --filter $(FILTER) --size $(if $(filter 1024,$(SIZE)),32,$(SIZE))
+
+# Simula con formas de onda y abre gtkwave con la vista ya armada (por defecto el caso smoke)
+fpga_wave: $(TARGET)
+	$(FPGA_SIM) --filter $(if $(filter command line,$(origin FILTER)),$(FILTER),smoke) --size $(if $(filter 1024,$(SIZE)),32,$(SIZE)) --wave
+
+fpga_test: $(TARGET)
+	$(FPGA_SIM) --filter isa
+	$(FPGA_SIM) --filter smoke
+	$(FPGA_SIM) --filter gauss --size 32
+	$(FPGA_SIM) --filter sobel --size 32
+	$(FPGA_SIM) --filter gauss --size 64 --seed 7
+	$(FPGA_SIM) --filter sobel --size 64 --seed 7
+
 # Borra TODOS los resultados, también los de otras máquinas (cuidado si ya los commiteó)
 clean_results:
 	rm -rf results
@@ -189,6 +209,10 @@ help:
 	@echo "                        (borra antes los resultados anteriores de esta maquina)"
 	@echo "  make profile          Perfilado: perf (CPU) y Nsight Compute (GPU), resumen en results/perfilado/"
 	@echo "  make profile_cpu      Solo perf          make profile_gpu   Solo Nsight Compute"
+	@echo "  make fpga_sim         Simula el procesador vectorial de la FPGA (FILTER, SIZE; por defecto 32)"
+	@echo "                        FILTER tambien acepta smoke (ejecucion dummy) e isa (prueba del ISA)"
+	@echo "  make fpga_wave        Simula y abre gtkwave con las senales del procesador (por defecto smoke)"
+	@echo "  make fpga_test        Prueba del ISA, dummy, Gauss y Sobel en simulacion (requiere iverilog)"
 	@echo "  make clean            Borra la carpeta build/"
 	@echo "  make clean_results    Borra la carpeta results/ completa (todas las maquinas)"
 	@echo ""

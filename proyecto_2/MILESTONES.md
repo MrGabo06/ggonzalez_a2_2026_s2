@@ -69,9 +69,12 @@ Terminado cuando un solo script produce las tablas y gráficas de CPU y GPU.
 
 Terminado cuando la FPGA procesa la imagen completa, pasa el validador y aparece en las mismas tablas que CPU y GPU.
 
-- [ ] Proyecto Quartus y ISA mínimo definido
-- [ ] Datapath con line buffers, ventana deslizante y MACs, simulado con testbench contra los .hex del baseline
-- [ ] Decodificador de instrucciones, memoria en chip y contador de ciclos
+- [x] ISA definido: procesador vectorial de 20 instrucciones (escalares, saltos, VLD/VST, vectoriales), ver `fpga/ISA.md`
+- [x] Decodificador de instrucciones, unidad de control multiciclo, memoria en chip entrelazada y contador de ciclos (`fpga/rtl/`)
+- [x] Ensamblador (`fpga/asm/vasm.py`) y programas Gauss 5×5 y Sobel 3×3 con bucles (`fpga/programs/`)
+- [x] Testbench contra los .hex del baseline: `make fpga_test`, 0 diferencias (requiere iverilog)
+- [ ] Proyecto Quartus y top de la tarjeta
+- [ ] Propuesta 2: pipeline y reutilización de la ventana
 - [ ] Transferencia PC → FPGA → PC por JTAG e imagen completa procesada por bloques
 - [ ] Backend FPGA conectado al runner, en lugar del stub
 - [ ] Medición con contador de ciclos y SignalTap; diferencias numéricas contra CPU y GPU
