@@ -22,6 +22,10 @@ public:
     // Aplica el filtro a toda la imagen. Es lo único que mide el runner.
     virtual void run(const Image& input, const Filter& filter, Image& output) = 0;
 
+    // Tiempo en ms que tardó la última llamada a run() solo dentro del dispositivo (el kernel
+    // de la GPU), sin las copias de memoria. Devuelve -1 si el backend no lo mide (CPU).
+    virtual double kernel_ms() const { return -1.0; }
+
     // Libera lo reservado en init().
     virtual void cleanup() {}
 };
