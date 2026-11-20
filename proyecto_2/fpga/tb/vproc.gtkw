@@ -1,0 +1,23 @@
+[*] Vista de gtkwave para tb_vproc: gtkwave build/fpga/<caso>.vcd fpga/tb/vproc.gtkw
+[timestart] 0
+@28
+tb_vproc.clk
+tb_vproc.start
+tb_vproc.busy
+tb_vproc.done
+@24
+tb_vproc.dut.u_ctrl.state[2:0]
+tb_vproc.dut.pc[8:0]
+@22
+tb_vproc.dut.ir[31:0]
+@24
+tb_vproc.dut.u_dec.opcode[5:0]
+tb_vproc.dut.cycles[31:0]
+tb_vproc.dbg_r1[31:0]
+tb_vproc.dbg_r3[31:0]
+@22
+tb_vproc.dut.mem_addr[31:0]
+tb_vproc.dut.ld_bytes[63:0]
+tb_vproc.dut.st_bytes[63:0]
+tb_vproc.dbg_v0[255:0]
+tb_vproc.dbg_v1[255:0]
