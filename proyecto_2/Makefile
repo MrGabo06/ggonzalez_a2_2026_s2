@@ -59,7 +59,7 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave
+.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim
 build: $(TARGET)
 
 # Unit tests: validator and sequential baseline (no special hardware needed)
@@ -179,6 +179,17 @@ fpga_sim: $(TARGET)
 fpga_wave: $(TARGET)
 	$(FPGA_SIM) --filter $(if $(filter command line,$(origin FILTER)),$(FILTER),smoke) --size $(if $(filter 1024,$(SIZE)),32,$(SIZE)) --wave
 
+# DE1-SoC: exporta el caso elegido a fpga/board/data/ (lo que la tarjeta carga al encender)
+# y simula el top completo de la tarjeta (carga, ejecución con KEY[1], comparación, displays)
+fpga_board: $(TARGET)
+	$(FPGA_SIM) --filter $(FILTER) --size $(if $(filter 1024,$(SIZE)),32,$(SIZE)) --board
+
+fpga_board_sim:
+	@mkdir -p $(BUILD)/fpga
+	cd fpga/board && iverilog -g2005 -Wall -Wno-timescale -I ../rtl -I data \
+		-o ../../$(BUILD)/fpga/tb_de1soc_top.vvp tb_de1soc_top.v de1soc_top.v ../rtl/vproc_*.v
+	cd fpga/board && vvp -n ../../$(BUILD)/fpga/tb_de1soc_top.vvp
+
 fpga_test: $(TARGET)
 	$(FPGA_SIM) --filter isa
 	$(FPGA_SIM) --filter smoke
@@ -212,6 +223,8 @@ help:
 	@echo "  make fpga_sim         Simula el procesador vectorial de la FPGA (FILTER, SIZE; por defecto 32)"
 	@echo "                        FILTER tambien acepta smoke (ejecucion dummy) e isa (prueba del ISA)"
 	@echo "  make fpga_wave        Simula y abre gtkwave con las senales del procesador (por defecto smoke)"
+	@echo "  make fpga_board       Prepara fpga/board/data/ para la DE1-SoC (FILTER, SIZE; por defecto gauss 32)"
+	@echo "  make fpga_board_sim   Simula el top de la DE1-SoC con esos datos (debe terminar en PASS)"
 	@echo "  make fpga_test        Prueba del ISA, dummy, Gauss y Sobel en simulacion (requiere iverilog)"
 	@echo "  make clean            Borra la carpeta build/"
 	@echo "  make clean_results    Borra la carpeta results/ completa (todas las maquinas)"

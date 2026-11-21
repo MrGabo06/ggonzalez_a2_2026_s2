@@ -55,8 +55,6 @@ module vproc_dmem #(
     genvar b;
     generate
         for (b = 0; b < LANES; b = b + 1) begin : bank
-            reg [7:0] mem [0:DEPTH-1];
-            reg [7:0] q;
             localparam [LG-1:0] BI = b;
 
             // Carril del núcleo que cae en este banco y fila que le toca:
@@ -71,13 +69,11 @@ module vproc_dmem #(
             wire [ROW_W-1:0] row   = core_sel ? c_row   : host_row;
             wire [7:0]       wdata = core_sel ? c_wdata : host_wdata;
 
-            always @(posedge clk) begin
-                if (en) begin
-                    if (we) mem[row] <= wdata;
-                    q <= mem[row];
-                end
-            end
+            wire [7:0]       q;
 
+            vproc_bram #(.WIDTH(8), .DEPTH(DEPTH)) u_ram (
+                .clk(clk), .en(en), .we(we), .addr(row), .wdata(wdata), .q(q)
+            );
             assign bank_q[b] = q;
         end
     endgenerate
