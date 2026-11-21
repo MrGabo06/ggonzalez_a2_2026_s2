@@ -6,6 +6,7 @@ Uso (desde proyecto_2/):
     python3 fpga/scripts/run_sim.py --filter sobel --size 32 --seed 7
     python3 fpga/scripts/run_sim.py --filter smoke          # ejecución dummy mínima
     python3 fpga/scripts/run_sim.py --filter isa            # prueba cada instrucción del ISA
+    python3 fpga/scripts/run_sim.py --filter gauss --size 32 --board   # datos para la DE1-SoC
     (o: make fpga_sim FILTER=gauss SIZE=64)
 
 Pasos:
@@ -26,6 +27,8 @@ BUILD = os.path.join(ROOT, "build", "fpga")
 LANES = 8
 DMEM_BYTES = 65536   # igual que tb_vproc.v
 IMEM_WORDS = 512     # igual que tb_vproc.v
+BOARD_DMEM_BYTES = 16384   # memoria de datos en la DE1-SoC (fpga/board/de1soc_top.v)
+BOARD_DATA = os.path.join(FPGA, "board", "data")
 
 RADIUS = {"gauss": 2, "sobel": 1, "smoke": 0, "isa": 0}
 PROGRAM = {"gauss": "gauss5.s", "sobel": "sobel3.s", "smoke": "smoke.s", "isa": "isa_test.s"}
@@ -73,6 +76,39 @@ def isa_hex():
     return fin, fexp
 
 
+def export_board(prog_hex, fin, fexp, w, h, r, in_base, out_base, tag):
+    """Escribe en fpga/board/data/ lo que la DE1-SoC carga en sus memorias al encender.
+
+    prog.hex   programa (IMEM_WORDS palabras)
+    in_pad.hex imagen de entrada ya con el borde replicado, un byte por línea
+    exp.hex    salida esperada (la de seq), un byte por línea
+    params.vh  tamaños y direcciones para de1soc_top.v
+    """
+    if out_base + w * h > BOARD_DMEM_BYTES:
+        sys.exit(f"no cabe en los {BOARD_DMEM_BYTES} bytes de la tarjeta; use un tamaño menor")
+    os.makedirs(BOARD_DATA, exist_ok=True)
+    with open(fin) as f:
+        img = [int(x, 16) for x in f.read().split()]
+    wp, hp = w + 2 * r, h + 2 * r
+    pad = []
+    for y in range(hp):
+        sy = min(max(y - r, 0), h - 1)
+        for x in range(wp):
+            sx = min(max(x - r, 0), w - 1)
+            pad.append(img[sy * w + sx])
+    shutil.copy(prog_hex, os.path.join(BOARD_DATA, "prog.hex"))
+    shutil.copy(fexp, os.path.join(BOARD_DATA, "exp.hex"))
+    with open(os.path.join(BOARD_DATA, "in_pad.hex"), "w") as f:
+        f.writelines(f"{p:02X}\n" for p in pad)
+    with open(os.path.join(BOARD_DATA, "params.vh"), "w") as f:
+        f.write(f"// Generado por run_sim.py --board para el caso {tag}. No editar a mano.\n"
+                f"localparam IN_BASE   = {in_base};\n"
+                f"localparam IN_BYTES  = {len(pad)};\n"
+                f"localparam OUT_BASE  = {out_base};\n"
+                f"localparam OUT_BYTES = {w * h};\n")
+    print(f"Datos para la DE1-SoC ({tag}) escritos en {BOARD_DATA}")
+
+
 def main():
     for tool in ("iverilog", "vvp"):
         if shutil.which(tool) is None:
@@ -85,6 +121,8 @@ def main():
     ap.add_argument("--vcd", action="store_true", help="guardar formas de onda en build/fpga/")
     ap.add_argument("--wave", action="store_true",
                     help="igual que --vcd y además abre gtkwave con la vista fpga/tb/vproc.gtkw")
+    ap.add_argument("--board", action="store_true",
+                    help="además exporta programa, imagen y esperado a fpga/board/data/ para la DE1-SoC")
     args = ap.parse_args()
 
     if args.filter == "smoke":
@@ -120,6 +158,9 @@ def main():
         sys.exit(f"el programa ocupa {n} palabras y la memoria de instrucciones tiene {IMEM_WORDS}")
     with open(prog_hex, "a") as f:
         f.write("00000000\n" * (IMEM_WORDS - n))
+
+    if args.board:
+        export_board(prog_hex, fin, fexp, w, h, r, in_base, out_base, tag)
 
     sim = os.path.join(BUILD, "tb_vproc.vvp")
     rtl = [os.path.join(FPGA, "rtl", f) for f in sorted(os.listdir(os.path.join(FPGA, "rtl"))) if f.endswith(".v")]
