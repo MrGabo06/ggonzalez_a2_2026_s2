@@ -7,6 +7,7 @@ Primera prueba en hardware, sin JTAG: la tarjeta trae el programa, la imagen y l
 | Archivo | Qué es |
 |---|---|
 | `de1soc_top.v` | Top de la tarjeta. Carga las memorias, arranca el VPROC, compara la salida y maneja los LEDs y displays |
+| `de1soc_display.v` | Conversión a decimal y displays de 7 segmentos (también lo usa `fpga/jtag/`) |
 | `tb_de1soc_top.v` | Simulación del top completo, incluyendo la pulsación de los botones |
 | `vproc_de1soc.qpf` / `.qsf` | Proyecto Quartus: dispositivo 5CSEMA5F31C6, archivos y pines |
 | `de1soc.sdc` | Restricción del reloj de 50 MHz |
@@ -59,4 +60,4 @@ Resultado esperado con Gauss 32×32: `LEDR[9]` encendido y `030425` en los displ
 
 ## Siguiente paso
 
-Reemplazar la carga fija por JTAG para enviar cualquier imagen desde la PC y leer el resultado y el contador. Eso es lo que necesita el backend `fpga` de `dlp_bench`.
+La versión con JTAG, donde la PC manda cualquier imagen y lee el resultado (backend `fpga` de `dlp_bench`), está en `fpga/jtag/`.

@@ -77,6 +77,11 @@ int main() {
     std::vector<std::string> names;
     for (const std::string& name : available_backends()) {
         if (name == "seq") continue;
+        // La FPGA va por JTAG y es lenta para todos estos tamaños: se prueba con make fpga_jtag_test
+        if (name == "fpga" && !std::getenv("DLP_TEST_FPGA")) {
+            std::cout << "OMITIDO fpga (use make fpga_jtag_test o DLP_TEST_FPGA=1)\n";
+            continue;
+        }
         auto backend = create_backend(name);
         if (!backend || !backend->available()) {
             std::cout << "OMITIDO " << name << " (no disponible en esta maquina)\n";
