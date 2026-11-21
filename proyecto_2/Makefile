@@ -18,7 +18,7 @@ FILTER   ?= gauss
 REPS     ?= 5
 ARGS     ?=
 
-CXXFLAGS := -std=c++17 -Wall -Wextra -I.
+CXXFLAGS := -std=c++17 -Wall -Wextra -I. -DDLP_ROOT=\"$(CURDIR)\"
 ifeq ($(DEBUG),1)
   CXXFLAGS += -O0 -g
 else
@@ -59,7 +59,7 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim
+.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim fpga_jtag_sim fpga_jtag_ping fpga_jtag_test
 build: $(TARGET)
 
 # Unit tests: validator and sequential baseline (no special hardware needed)
@@ -187,8 +187,29 @@ fpga_board: $(TARGET)
 fpga_board_sim:
 	@mkdir -p $(BUILD)/fpga
 	cd fpga/board && iverilog -g2005 -Wall -Wno-timescale -I ../rtl -I data \
-		-o ../../$(BUILD)/fpga/tb_de1soc_top.vvp tb_de1soc_top.v de1soc_top.v ../rtl/vproc_*.v
+		-o ../../$(BUILD)/fpga/tb_de1soc_top.vvp tb_de1soc_top.v de1soc_top.v de1soc_display.v ../rtl/vproc_*.v
 	cd fpga/board && vvp -n ../../$(BUILD)/fpga/tb_de1soc_top.vvp
+
+# DE1-SoC por JTAG (fpga/jtag/): la PC manda la imagen, el VPROC la procesa y la PC lee el
+# resultado. fpga_jtag_sim prueba todo el camino sin tarjeta (C++ -> Tcl -> RTL en Icarus);
+# DMEM pequeño para que la imagen se procese en varias franjas, como pasa con las grandes.
+FPGA_COSIM := python3 fpga/jtag/sim/cosim.py --
+fpga_jtag_sim: $(TARGET)
+	DLP_FPGA_DMEM=2048 $(FPGA_COSIM) ./$(TARGET) --backend fpga --filter gauss --size 37 --reps 1 --warmup 1 --validate --output $(BUILD)/fpga/jtag_gauss.pgm
+	DLP_FPGA_DMEM=2048 $(FPGA_COSIM) ./$(TARGET) --backend fpga --filter sobel --size 40 --reps 1 --warmup 0 --validate --output $(BUILD)/fpga/jtag_sobel.pgm
+	$(FPGA_COSIM) ./$(TARGET) --backend fpga --filter gauss --size 32 --reps 1 --warmup 0 --validate --output $(BUILD)/fpga/jtag_gauss32.pgm
+
+# Con la tarjeta programada con fpga/jtag/output_files/vproc_jtag.sof
+QUARTUS_STP ?= $(shell command -v quartus_stp 2>/dev/null || ls -d $$HOME/altera_lite/*/quartus/bin/quartus_stp $$HOME/intelFPGA_lite/*/quartus/bin/quartus_stp 2>/dev/null | head -1)
+fpga_jtag_ping:
+	@test -n "$(QUARTUS_STP)" || (echo "No se encontró quartus_stp; use make fpga_jtag_ping QUARTUS_STP=/ruta/quartus_stp" && false)
+	$(QUARTUS_STP) -t fpga/jtag/vproc_jtag.tcl ping
+
+fpga_jtag_test: $(TARGET)
+	./$(TARGET) --backend fpga --filter gauss --size 32 --reps 3 --warmup 1 --validate
+	./$(TARGET) --backend fpga --filter sobel --size 32 --reps 3 --warmup 1 --validate
+	./$(TARGET) --backend fpga --filter gauss --size 100 --reps 3 --warmup 1 --validate
+	./$(TARGET) --backend fpga --filter sobel --size 256 --reps 3 --warmup 1 --validate
 
 fpga_test: $(TARGET)
 	$(FPGA_SIM) --filter isa
@@ -225,6 +246,9 @@ help:
 	@echo "  make fpga_wave        Simula y abre gtkwave con las senales del procesador (por defecto smoke)"
 	@echo "  make fpga_board       Prepara fpga/board/data/ para la DE1-SoC (FILTER, SIZE; por defecto gauss 32)"
 	@echo "  make fpga_board_sim   Simula el top de la DE1-SoC con esos datos (debe terminar en PASS)"
+	@echo "  make fpga_jtag_sim    Prueba el backend fpga por JTAG sin tarjeta (requiere iverilog y tclsh)"
+	@echo "  make fpga_jtag_ping   Con la tarjeta programada (fpga/jtag): verifica que el puente JTAG responde"
+	@echo "  make fpga_jtag_test   Con la tarjeta: corre el backend fpga y valida contra seq"
 	@echo "  make fpga_test        Prueba del ISA, dummy, Gauss y Sobel en simulacion (requiere iverilog)"
 	@echo "  make clean            Borra la carpeta build/"
 	@echo "  make clean_results    Borra la carpeta results/ completa (todas las maquinas)"
