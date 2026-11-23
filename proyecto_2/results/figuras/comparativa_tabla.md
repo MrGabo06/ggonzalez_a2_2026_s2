@@ -8,27 +8,27 @@ Mismas imágenes y mismos filtros. La CPU se midió en la máquina conectada a l
 
 | | 32² | 64² | 100² | 128² | 256² | 512² |
 |---|---|---|---|---|---|---|
-| seq | 0.0264 | 0.113 | 0.275 | 0.450 | 1.758 | 7.210 |
-| mejor SIMD | 0.0023 (simd_sep) | 0.0058 (simd_sep) | 0.0074 (simd_sep512) | 0.0172 (simd_sep512) | 0.0505 (simd_sep512) | 0.161 (simd_sep512) |
+| seq | 0.0269 | 0.110 | 0.263 | 0.440 | 1.831 | 7.108 |
+| mejor SIMD | 0.0023 (simd_sep) | 0.0066 (simd_sep512) | 0.0074 (simd_sep512) | 0.0164 (simd_sep512) | 0.0566 (simd_sep512) | 0.194 (simd_sep512) |
 | fpga kernel | 0.609 | 2.404 | 6.075 | 9.558 | 38.420 | 152.6 |
-| fpga total (con JTAG) | 8.890 | 32.489 | 83.406 | 128.4 | 520.8 | 2066.1 |
-| fpga kernel / total | 6.8 % | 7.4 % | 7.3 % | 7.4 % | 7.4 % | 7.4 % |
-| speedup del kernel contra seq | 0.043x | 0.047x | 0.045x | 0.047x | 0.046x | 0.047x |
-| speedup del total contra seq | 0.003x | 0.003x | 0.003x | 0.004x | 0.003x | 0.003x |
-| speedup del mejor SIMD contra seq | 11.5x | 19.3x | 36.9x | 26.2x | 34.8x | 44.8x |
+| fpga total (con JTAG) | 9.620 | 33.498 | 83.976 | 134.6 | 550.5 | 2147.9 |
+| fpga kernel / total | 6.3 % | 7.2 % | 7.2 % | 7.1 % | 7.0 % | 7.1 % |
+| speedup del kernel contra seq | 0.044x | 0.046x | 0.043x | 0.046x | 0.048x | 0.047x |
+| speedup del total contra seq | 0.003x | 0.003x | 0.003x | 0.003x | 0.003x | 0.003x |
+| speedup del mejor SIMD contra seq | 11.9x | 16.7x | 35.5x | 26.9x | 32.3x | 36.6x |
 
 ### sobel: mediana en ms
 
 | | 32² | 64² | 100² | 128² | 256² | 512² |
 |---|---|---|---|---|---|---|
-| seq | 0.0122 | 0.0493 | 0.122 | 0.199 | 0.795 | 3.179 |
-| mejor SIMD | 0.0015 (simd_sep) | 0.0038 (simd_sep) | 0.0056 (simd_sep512) | 0.0113 (simd_sep512) | 0.0336 (simd_sep512) | 0.116 (simd_sep512) |
+| seq | 0.0119 | 0.0482 | 0.119 | 0.194 | 0.779 | 3.085 |
+| mejor SIMD | 0.0016 (simd_sep) | 0.0043 (simd_sep) | 0.0056 (simd_sep512) | 0.0114 (simd_sep512) | 0.0363 (simd_sep512) | 0.129 (simd_sep512) |
 | fpga kernel | 0.199 | 0.765 | 1.915 | 3.004 | 12.000 | 47.503 |
-| fpga total (con JTAG) | 8.741 | 30.692 | 76.599 | 122.4 | 501.3 | 1969.3 |
-| fpga kernel / total | 2.3 % | 2.5 % | 2.5 % | 2.5 % | 2.4 % | 2.4 % |
-| speedup del kernel contra seq | 0.062x | 0.064x | 0.064x | 0.066x | 0.066x | 0.067x |
+| fpga total (con JTAG) | 8.359 | 28.934 | 76.083 | 121.9 | 492.1 | 2036.4 |
+| fpga kernel / total | 2.4 % | 2.6 % | 2.5 % | 2.5 % | 2.4 % | 2.3 % |
+| speedup del kernel contra seq | 0.060x | 0.063x | 0.062x | 0.065x | 0.065x | 0.065x |
 | speedup del total contra seq | 0.001x | 0.002x | 0.002x | 0.002x | 0.002x | 0.002x |
-| speedup del mejor SIMD contra seq | 8.24x | 13.0x | 22.0x | 17.6x | 23.6x | 27.3x |
+| speedup del mejor SIMD contra seq | 7.61x | 11.1x | 21.3x | 17.1x | 21.5x | 23.8x |
 
 ## Todas las plataformas en 512² (el tamaño común)
 
@@ -44,7 +44,7 @@ El speedup de cada fila es contra el `seq` de **su propia máquina**. Las column
 | msi-ema | mejor SIMD (simd_sep512) | 0.170 | 43.4x | 0.141 | 22.7x |
 | msi-ema | mejor CUDA con copias (cuda_tiled) | 0.172 | 42.9x | 0.170 | 18.9x |
 | msi-ema | mejor CUDA solo kernel (cuda_tiled) | 0.0246 | 298.8x | 0.0166 | 192.8x |
-| chunchunmaru (CPU de la FPGA) | seq | 7.210 | 1.00x | 3.179 | 1.00x |
-| chunchunmaru (CPU de la FPGA) | mejor SIMD (simd_sep512) | 0.161 | 44.8x | 0.116 | 27.3x |
-| FPGA fpga | kernel (ciclos / 50 MHz) | 152.6 | 0.047x | 47.503 | 0.067x |
-| FPGA fpga | total con JTAG | 2066.1 | 0.003x | 1969.3 | 0.002x |
+| chunchunmaru (CPU de la FPGA) | seq | 7.108 | 1.00x | 3.085 | 1.00x |
+| chunchunmaru (CPU de la FPGA) | mejor SIMD (simd_sep512) | 0.194 | 36.6x | 0.129 | 23.8x |
+| FPGA fpga | kernel (ciclos / 50 MHz) | 152.6 | 0.047x | 47.503 | 0.065x |
+| FPGA fpga | total con JTAG | 2147.9 | 0.003x | 2036.4 | 0.002x |
