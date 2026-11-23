@@ -1,0 +1,125 @@
+==PROF== Connected to process 11618 (/home/gabriel/Documents/TEC/Arqui2/Proyecto1 y 2/ggonzalez_a2_2026_s2/proyecto_2/build/dlp_bench)
+==PROF== Profiling "ConvolveGlobal" - 0 (1/1): 0%....50%....100% - 17 passes
+cuda,gauss,4096x4096,rep=0,863.468 ms
+summary,cuda,gauss,4096x4096,reps=1,warmup=0,median=863.468,mean=863.468,stddev=0,min=863.468,max=863.468 ms
+kernel,cuda,gauss,4096x4096,median=853.235,mean=853.235,stddev=0,min=853.235,max=853.235 ms
+Salida escrita en /dev/null
+==PROF== Disconnected from process 11618
+[11618] dlp_bench@127.0.0.1
+  <unnamed>::ConvolveGlobal(const unsigned char *, unsigned char *, int, int, const float *, int) (256, 256, 1)x(16, 16, 1), Context 1, Stream 7, Device 0, CC 8.6
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ------------- ------------
+    Metric Name               Metric Unit Metric Value
+    ----------------------- ------------- ------------
+    DRAM Frequency          cycle/nsecond         5.99
+    SM Frequency            cycle/nsecond         1.46
+    Elapsed Cycles                  cycle      4138197
+    Memory Throughput                   %        92.50
+    DRAM Throughput                     %         6.16
+    Duration                      msecond         2.83
+    L1/TEX Cache Throughput             %        92.55
+    L2 Cache Throughput                 %         6.45
+    SM Active Cycles                cycle   4135445.85
+    Compute (SM) Throughput             %        92.50
+    ----------------------- ------------- ------------
+
+    INF   The kernel is utilizing greater than 80.0% of the available compute or memory performance of the device. To   
+          further improve performance, work will likely need to be shifted from the most utilized to another unit.      
+          Start by analyzing workloads in the Compute Workload Analysis section.                                        
+
+    Section: Compute Workload Analysis
+    -------------------- ----------- ------------
+    Metric Name          Metric Unit Metric Value
+    -------------------- ----------- ------------
+    Executed Ipc Active   inst/cycle         3.26
+    Executed Ipc Elapsed  inst/cycle         3.26
+    Issue Slots Busy               %        81.62
+    Issued Ipc Active     inst/cycle         3.26
+    SM Busy                        %        81.62
+    -------------------- ----------- ------------
+
+    OPT   ALU is the highest-utilized pipeline (74.2%) based on active cycles, taking into account the rates of its     
+          different instructions. It executes integer and logic operations. The pipeline is well-utilized, but might    
+          become a bottleneck if more work is added. Based on the number of executed instructions, the highest          
+          utilized pipeline (92.5%) is LSU. It executes load/store memory operations. Comparing the two, the overall    
+          pipeline utilization appears to be caused by frequent, low-latency instructions. See the Kernel Profiling     
+          Guide (https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#metrics-decoder) or hover over the    
+          pipeline name to understand the workloads handled by each pipeline. The Instruction Statistics section shows  
+          the mix of executed instructions in this kernel.                                                              
+
+    Section: Memory Workload Analysis
+    --------------------------- ------------ ------------
+    Metric Name                  Metric Unit Metric Value
+    --------------------------- ------------ ------------
+    Memory Throughput           Gbyte/second        11.81
+    Mem Busy                               %        64.01
+    Max Bandwidth                          %        92.50
+    L1/TEX Hit Rate                        %        93.04
+    L2 Compression Success Rate            %            0
+    L2 Compression Ratio                                0
+    L2 Hit Rate                            %        85.23
+    Mem Pipes Busy                         %        92.50
+    --------------------------- ------------ ------------
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle        11.95
+    Warp Cycles Per Executed Instruction           cycle        11.95
+    Avg. Active Threads Per Warp                                   32
+    Avg. Not Predicated Off Threads Per Warp                    27.15
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst      3375104
+    Executed Instructions                           inst    270008320
+    Avg. Issued Instructions Per Scheduler          inst   3375180.12
+    Issued Instructions                             inst    270014410
+    ---------------------------------------- ----------- ------------
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   256
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                  65536
+    Registers Per Thread             register/thread              40
+    Shared Memory Configuration Size           Kbyte            8.19
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block       byte/block               0
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              20
+    Threads                                   thread        16777216
+    Uses Green Context                                             0
+    Waves Per SM                                              546.13
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Block Limit SM                        block           16
+    Block Limit Registers                 block            6
+    Block Limit Shared Mem                block            8
+    Block Limit Warps                     block            6
+    Theoretical Active Warps per SM        warp           48
+    Theoretical Occupancy                     %          100
+    Achieved Occupancy                        %        81.54
+    Achieved Active Warps Per SM           warp        39.14
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 18.46%                                                                                    
+          The difference between calculated theoretical (100.0%) and measured achieved occupancy (81.5%) can be the     
+          result of warp scheduling overheads or workload imbalances during the kernel execution. Load imbalances can   
+          occur between warps within a block as well as across blocks of the same kernel. See the CUDA Best Practices   
+          Guide (https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#occupancy) for more details on     
+          optimizing occupancy.                                                                                         
+
