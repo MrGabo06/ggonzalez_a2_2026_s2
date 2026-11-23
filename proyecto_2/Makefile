@@ -59,7 +59,7 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim fpga_jtag_sim fpga_jtag_ping fpga_jtag_test fpga_jtag_bench fpga_signaltap_report fpga_baseline compare numeric_export numeric_diff
+.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim fpga_jtag_sim fpga_jtag_ping fpga_jtag_test fpga_jtag_bench fpga_signaltap_report fpga_baseline compare numeric_export numeric_diff efficiency
 build: $(TARGET)
 
 # Unit tests: validator and sequential baseline (no special hardware needed)
@@ -248,6 +248,11 @@ fpga_baseline:
 compare:
 	python3 scripts/compare_platforms.py
 
+# make efficiency   eficiencia paralela de CUDA y de la FPGA (clasica S/p y utilizacion del pico);
+#                   usa los CSV de results/ y los reportes de Nsight Compute de results/perfilado/
+efficiency:
+	python3 scripts/parallel_efficiency.py
+
 # make numeric_export  en CADA maquina (detecta SIMD, AVX-512, GPU y la FPGA): guarda los digests de
 #                      las salidas en results/numeric/<maquina>_digest.csv (eso es lo que se sube a git)
 # make numeric_diff    une los digests de todas las maquinas en results/numeric/diferencias.md
@@ -302,6 +307,7 @@ help:
 	@echo "  make fpga_signaltap_report  Perfil del VPROC desde un CSV de SignalTap (STP_CSV=<archivo> STP_CYCLES=<ciclos>)"
 	@echo "  make fpga_baseline    Mide seq y SIMD en esta maquina a los tamanos de la FPGA (32 a 512)"
 	@echo "  make compare          Tablas y graficas con la FPGA junto a CPU y GPU (results/figuras/comparativa_*)"
+	@echo "  make efficiency       Eficiencia paralela de CUDA y de la FPGA (results/figuras/eficiencia_paralela.*)"
 	@echo "  make numeric_export   Digests de las salidas de los backends de esta maquina (results/numeric/)"
 	@echo "  make numeric_diff     Une los digests de todas las maquinas: diferencias numericas CPU, GPU y FPGA"
 	@echo "  make fpga_test        Prueba del ISA, dummy, Gauss y Sobel en simulacion (requiere iverilog)"
