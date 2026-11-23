@@ -59,12 +59,7 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-
-# Solo el backend FPGA usa DLP_ROOT. Las comillas simples mantienen la ruta completa como un
-# solo argumento aunque tenga espacios (por ejemplo "Proyecto1 y 2")
-$(BUILD)/backends/fpga/fpga_backend.o: CXXFLAGS += -DDLP_ROOT='"$(CURDIR)"'
-
-.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim fpga_jtag_sim fpga_jtag_ping fpga_jtag_test fpga_jtag_bench
+.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim fpga_jtag_sim fpga_jtag_ping fpga_jtag_test fpga_jtag_bench fpga_signaltap_report
 build: $(TARGET)
 
 # Unit tests: validator and sequential baseline (no special hardware needed)
@@ -226,6 +221,15 @@ fpga_jtag_test: $(TARGET)
 fpga_jtag_bench: $(TARGET)
 	scripts/run_fpga_bench.sh
 
+# Perfil interno del VPROC (ocupacion de la FSM, CPI, mezcla de instrucciones, bucle interno) a
+# partir de un CSV exportado de SignalTap con la revision vproc_jtag_stp (fpga/jtag/vproc_jtag.stp).
+# Escribe el reporte junto al CSV con sufijo _perfil.md. STP_CYCLES (opcional) cruza con el
+# contador de hardware. Ejemplo: make fpga_signaltap_report STP_CSV=results/signaltap/sobel_32.csv STP_CYCLES=9942
+STP_CSV    ?= results/signaltap/sobel_32.csv
+STP_CYCLES ?=
+fpga_signaltap_report:
+	python3 scripts/signaltap_report.py $(STP_CSV) $(if $(STP_CYCLES),--cycles $(STP_CYCLES)) --md $(STP_CSV:.csv=_perfil.md)
+
 fpga_test: $(TARGET)
 	$(FPGA_SIM) --filter isa
 	$(FPGA_SIM) --filter smoke
@@ -266,6 +270,7 @@ help:
 	@echo "  make fpga_jtag_test   Con la tarjeta: corre el backend fpga y valida contra seq"
 	@echo "  make fpga_jtag_bench  Con la tarjeta: barrido de filtros y tamanos, CSV en results/fpga/ y tabla"
 	@echo "                        (FPGA_SIZES=\"32 64 100\" FPGA_FILTERS=gauss FPGA_REPS=5 FPGA_WARMUP=1)"
+	@echo "  make fpga_signaltap_report  Perfil del VPROC desde un CSV de SignalTap (STP_CSV=<archivo> STP_CYCLES=<ciclos>)"
 	@echo "  make fpga_test        Prueba del ISA, dummy, Gauss y Sobel en simulacion (requiere iverilog)"
 	@echo "  make clean            Borra la carpeta build/"
 	@echo "  make clean_results    Borra la carpeta results/ completa (todas las maquinas)"
