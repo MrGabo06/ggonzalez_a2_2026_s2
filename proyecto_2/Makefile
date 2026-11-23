@@ -18,7 +18,7 @@ FILTER   ?= gauss
 REPS     ?= 5
 ARGS     ?=
 
-CXXFLAGS := -std=c++17 -Wall -Wextra -I. -DDLP_ROOT=\"$(CURDIR)\"
+CXXFLAGS := -std=c++17 -Wall -Wextra -I.
 ifeq ($(DEBUG),1)
   CXXFLAGS += -O0 -g
 else
@@ -157,7 +157,11 @@ PROFILE_MODE ?= all
 profile:
 	@echo "Opciones detectadas: $(AUTO_FLAGS)"
 	$(MAKE) clean
-	rm -rf results/perfilado/$(BENCH_HOST)_*
+	@case "$(PROFILE_MODE)" in \
+	  cpu) rm -f results/perfilado/$(BENCH_HOST)_perf.csv ;; \
+	  gpu) rm -rf results/perfilado/$(BENCH_HOST)_ncu ;; \
+	  *)   rm -rf results/perfilado/$(BENCH_HOST)_* ;; \
+	esac
 	$(MAKE) -j$(JOBS) build $(AUTO_FLAGS)
 	bash scripts/run_profile.sh $(PROFILE_MODE)
 
