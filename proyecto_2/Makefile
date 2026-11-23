@@ -59,7 +59,7 @@ endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
 
-.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim fpga_jtag_sim fpga_jtag_ping fpga_jtag_test
+.PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim fpga_jtag_sim fpga_jtag_ping fpga_jtag_test fpga_jtag_bench
 build: $(TARGET)
 
 # Unit tests: validator and sequential baseline (no special hardware needed)
@@ -211,6 +211,12 @@ fpga_jtag_test: $(TARGET)
 	./$(TARGET) --backend fpga --filter gauss --size 100 --reps 3 --warmup 1 --validate
 	./$(TARGET) --backend fpga --filter sobel --size 256 --reps 3 --warmup 1 --validate
 
+# Con la tarjeta programada con vproc_jtag.sof: barrido de filtros y tamanos con --validate,
+# guarda un CSV nuevo en results/fpga/ e imprime la tabla de resultados.
+# Opcional: FPGA_SIZES="32 64 100 128 256 512" FPGA_FILTERS="gauss sobel" FPGA_REPS=5 FPGA_WARMUP=1
+fpga_jtag_bench: $(TARGET)
+	scripts/run_fpga_bench.sh
+
 fpga_test: $(TARGET)
 	$(FPGA_SIM) --filter isa
 	$(FPGA_SIM) --filter smoke
@@ -249,6 +255,8 @@ help:
 	@echo "  make fpga_jtag_sim    Prueba el backend fpga por JTAG sin tarjeta (requiere iverilog y tclsh)"
 	@echo "  make fpga_jtag_ping   Con la tarjeta programada (fpga/jtag): verifica que el puente JTAG responde"
 	@echo "  make fpga_jtag_test   Con la tarjeta: corre el backend fpga y valida contra seq"
+	@echo "  make fpga_jtag_bench  Con la tarjeta: barrido de filtros y tamanos, CSV en results/fpga/ y tabla"
+	@echo "                        (FPGA_SIZES=\"32 64 100\" FPGA_FILTERS=gauss FPGA_REPS=5 FPGA_WARMUP=1)"
 	@echo "  make fpga_test        Prueba del ISA, dummy, Gauss y Sobel en simulacion (requiere iverilog)"
 	@echo "  make clean            Borra la carpeta build/"
 	@echo "  make clean_results    Borra la carpeta results/ completa (todas las maquinas)"
