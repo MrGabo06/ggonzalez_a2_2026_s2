@@ -18,7 +18,7 @@ FILTER   ?= gauss
 REPS     ?= 5
 ARGS     ?=
 
-CXXFLAGS := -std=c++17 -Wall -Wextra -I. -DDLP_ROOT=\"$(CURDIR)\"
+CXXFLAGS := -std=c++17 -Wall -Wextra -I.
 ifeq ($(DEBUG),1)
   CXXFLAGS += -O0 -g
 else
@@ -58,6 +58,11 @@ ifeq ($(CUDA),1)
 endif
 
 OBJS := $(SRCS:%.cpp=$(BUILD)/%.o) $(CU_SRCS:%.cu=$(BUILD)/%.o)
+
+
+# Solo el backend FPGA usa DLP_ROOT. Las comillas simples mantienen la ruta completa como un
+# solo argumento aunque tenga espacios (por ejemplo "Proyecto1 y 2")
+$(BUILD)/backends/fpga/fpga_backend.o: CXXFLAGS += -DDLP_ROOT='"$(CURDIR)"'
 
 .PHONY: help build clean clean_results run test test_backends bench analyze report profile profile_cpu profile_gpu fpga_sim fpga_test fpga_wave fpga_board fpga_board_sim fpga_jtag_sim fpga_jtag_ping fpga_jtag_test
 build: $(TARGET)
