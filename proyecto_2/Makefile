@@ -231,7 +231,7 @@ fpga_signaltap_report:
 	python3 scripts/signaltap_report.py $(STP_CSV) $(if $(STP_CYCLES),--cycles $(STP_CYCLES)) --md $(STP_CSV:.csv=_perfil.md)
 
 # ---- Comparativa CPU, GPU y FPGA ---------------------------------------------------------
-# make fpga_baseline  mide seq y SIMD en ESTA maquina a los tamanos de la FPGA (32 a 512); es la
+# make fpga_baseline  mide seq y SIMD en ESTA maquina a los tamanos de la FPGA (32 a 1024); es la
 #                     base para el speedup de la FPGA. Hacerlo en la maquina que maneja la tarjeta.
 # make compare        tablas y graficas con la FPGA junto a CPU y GPU (results/figuras/comparativa_*)
 BASELINE_BACKENDS := seq seq_sep simd simd_sep simd512 simd_sep512
@@ -243,7 +243,7 @@ fpga_baseline:
 	@mkdir -p results/fpga
 	rm -f $(BASELINE_OUT)
 	BACKENDS="$(BASELINE_BACKENDS)" SIZES="32 64 100 128" REPS=200 WARMUP=10 OUT=$(BASELINE_OUT) scripts/run_bench.sh
-	BACKENDS="$(BASELINE_BACKENDS)" SIZES="256 512" REPS=40 WARMUP=5 OUT=$(BASELINE_OUT) scripts/run_bench.sh
+	BACKENDS="$(BASELINE_BACKENDS)" SIZES="256 512 1024" REPS=40 WARMUP=5 OUT=$(BASELINE_OUT) scripts/run_bench.sh
 
 compare:
 	python3 scripts/compare_platforms.py
@@ -310,7 +310,7 @@ help:
 	@echo "  make fpga_jtag_bench  Con la tarjeta: barrido de filtros y tamanos, CSV en results/fpga/ y tabla"
 	@echo "                        (FPGA_SIZES=\"32 64 100\" FPGA_FILTERS=gauss FPGA_REPS=5 FPGA_WARMUP=1)"
 	@echo "  make fpga_signaltap_report  Perfil del VPROC desde un CSV de SignalTap (STP_CSV=<archivo> STP_CYCLES=<ciclos>)"
-	@echo "  make fpga_baseline    Mide seq y SIMD en esta maquina a los tamanos de la FPGA (32 a 512)"
+	@echo "  make fpga_baseline    Mide seq y SIMD en esta maquina a los tamanos de la FPGA (32 a 1024)"
 	@echo "  make compare          Tablas y graficas con la FPGA junto a CPU y GPU (results/figuras/comparativa_*)"
 	@echo "  make efficiency       Eficiencia paralela de CUDA y de la FPGA (results/figuras/eficiencia_paralela.*)"
 	@echo "  make fpga_resources   Recursos y Fmax de Quartus de los disenos de la FPGA (results/quartus/)"
