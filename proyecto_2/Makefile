@@ -162,7 +162,11 @@ PROFILE_MODE ?= all
 profile:
 	@echo "Opciones detectadas: $(AUTO_FLAGS)"
 	$(MAKE) clean
-	rm -rf results/perfilado/$(BENCH_HOST)_*
+	@case "$(PROFILE_MODE)" in \
+	  cpu) rm -f results/perfilado/$(BENCH_HOST)_perf.csv ;; \
+	  gpu) rm -rf results/perfilado/$(BENCH_HOST)_ncu ;; \
+	  *)   rm -rf results/perfilado/$(BENCH_HOST)_* ;; \
+	esac
 	$(MAKE) -j$(JOBS) build $(AUTO_FLAGS)
 	bash scripts/run_profile.sh $(PROFILE_MODE)
 
