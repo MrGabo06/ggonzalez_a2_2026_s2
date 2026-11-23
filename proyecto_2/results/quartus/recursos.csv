@@ -1,0 +1,4 @@
+revision,description,device,quartus,fitter,alms,alms_total,alms_pct,registers,mem_bits,mem_bits_total,ram_blocks,ram_blocks_total,dsp,dsp_total,pins,fmax_clock50_mhz,fmax_margin_vs_50mhz,setup_slack_ns,hold_slack_ns
+vproc_de1soc,Prueba autónoma en la tarjeta (sin JTAG),5CSEMA5F31C6,25.1std.0 Build 1129 10/21/2025 SC Lite Edition,Successful - Mon Nov 23 17:30:01 2026,4878,32070,15.2,3175,231456,4065280,32,397,10,87,67,62.84,1.257,4.086,0.172
+vproc_jtag,"JTAG, backend fpga (propuesta 1)",5CSEMA5F31C6,25.1std.0 Build 1129 10/21/2025 SC Lite Edition,Successful - Fri Nov 20 19:04:31 2026,7341,32070,22.9,8500,540672,4065280,66,397,10,87,67,63.04,1.261,4.138,0.164
+vproc_jtag_stp,JTAG con SignalTap,5CSEMA5F31C6,25.1std.0 Build 1129 10/21/2025 SC Lite Edition,Successful - Mon Nov 23 16:12:53 2026,7733,32070,24.1,9686,1327104,4065280,162,397,10,87,67,65.6,1.312,4.755,0.14
