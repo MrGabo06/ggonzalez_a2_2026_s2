@@ -4,18 +4,18 @@
 
 | Caso | Filtro | Tamaño | Resultado |
 |---|---|---|---|
-| CPU + GPU | gauss | 64² (semilla 42) | pendiente: falta GPU (correr `make numeric_export` en esa máquina) |
-| CPU + FPGA | gauss | 64² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 7 salidas) |
-| GPU + CPU + FPGA | gauss | 64² (semilla 42) | pendiente: falta GPU (correr `make numeric_export` en esa máquina) |
-| CPU + GPU | gauss | 512² (semilla 42) | pendiente: falta GPU (correr `make numeric_export` en esa máquina) |
-| CPU + FPGA | gauss | 512² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 7 salidas) |
-| GPU + CPU + FPGA | gauss | 512² (semilla 42) | pendiente: falta GPU (correr `make numeric_export` en esa máquina) |
-| CPU + GPU | sobel | 64² (semilla 42) | pendiente: falta GPU (correr `make numeric_export` en esa máquina) |
-| CPU + FPGA | sobel | 64² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 7 salidas) |
-| GPU + CPU + FPGA | sobel | 64² (semilla 42) | pendiente: falta GPU (correr `make numeric_export` en esa máquina) |
-| CPU + GPU | sobel | 512² (semilla 42) | pendiente: falta GPU (correr `make numeric_export` en esa máquina) |
-| CPU + FPGA | sobel | 512² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 7 salidas) |
-| GPU + CPU + FPGA | sobel | 512² (semilla 42) | pendiente: falta GPU (correr `make numeric_export` en esa máquina) |
+| CPU + GPU | gauss | 64² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 12 salidas) |
+| CPU + FPGA | gauss | 64² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 11 salidas) |
+| GPU + CPU + FPGA | gauss | 64² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 13 salidas) |
+| CPU + GPU | gauss | 512² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 12 salidas) |
+| CPU + FPGA | gauss | 512² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 11 salidas) |
+| GPU + CPU + FPGA | gauss | 512² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 13 salidas) |
+| CPU + GPU | sobel | 64² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 12 salidas) |
+| CPU + FPGA | sobel | 64² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 11 salidas) |
+| GPU + CPU + FPGA | sobel | 64² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 13 salidas) |
+| CPU + GPU | sobel | 512² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 12 salidas) |
+| CPU + FPGA | sobel | 512² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 11 salidas) |
+| GPU + CPU + FPGA | sobel | 512² (semilla 42) | **idénticos bit a bit** (diferencia máxima 0, 0 píxeles distintos; 13 salidas) |
 
 ### Inventario de digests
 
@@ -28,6 +28,12 @@
 | chunchunmaru | simd512 | gauss | 64² | `4609900127` | `bcc8c6adb1` |
 | chunchunmaru | simd_sep | gauss | 64² | `4609900127` | `bcc8c6adb1` |
 | chunchunmaru | simd_sep512 | gauss | 64² | `4609900127` | `bcc8c6adb1` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | cuda | gauss | 64² | `4609900127` | `bcc8c6adb1` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | cuda_tiled | gauss | 64² | `4609900127` | `bcc8c6adb1` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | seq | gauss | 64² | `4609900127` | `bcc8c6adb1` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | seq_sep | gauss | 64² | `4609900127` | `bcc8c6adb1` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | simd | gauss | 64² | `4609900127` | `bcc8c6adb1` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | simd_sep | gauss | 64² | `4609900127` | `bcc8c6adb1` |
 | chunchunmaru | fpga | gauss | 512² | `d1537f64fa` | `463265710a` |
 | chunchunmaru | seq | gauss | 512² | `d1537f64fa` | `463265710a` |
 | chunchunmaru | seq_sep | gauss | 512² | `d1537f64fa` | `463265710a` |
@@ -35,6 +41,12 @@
 | chunchunmaru | simd512 | gauss | 512² | `d1537f64fa` | `463265710a` |
 | chunchunmaru | simd_sep | gauss | 512² | `d1537f64fa` | `463265710a` |
 | chunchunmaru | simd_sep512 | gauss | 512² | `d1537f64fa` | `463265710a` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | cuda | gauss | 512² | `d1537f64fa` | `463265710a` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | cuda_tiled | gauss | 512² | `d1537f64fa` | `463265710a` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | seq | gauss | 512² | `d1537f64fa` | `463265710a` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | seq_sep | gauss | 512² | `d1537f64fa` | `463265710a` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | simd | gauss | 512² | `d1537f64fa` | `463265710a` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | simd_sep | gauss | 512² | `d1537f64fa` | `463265710a` |
 | chunchunmaru | fpga | sobel | 64² | `4609900127` | `4fc53b2832` |
 | chunchunmaru | seq | sobel | 64² | `4609900127` | `4fc53b2832` |
 | chunchunmaru | seq_sep | sobel | 64² | `4609900127` | `4fc53b2832` |
@@ -42,6 +54,12 @@
 | chunchunmaru | simd512 | sobel | 64² | `4609900127` | `4fc53b2832` |
 | chunchunmaru | simd_sep | sobel | 64² | `4609900127` | `4fc53b2832` |
 | chunchunmaru | simd_sep512 | sobel | 64² | `4609900127` | `4fc53b2832` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | cuda | sobel | 64² | `4609900127` | `4fc53b2832` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | cuda_tiled | sobel | 64² | `4609900127` | `4fc53b2832` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | seq | sobel | 64² | `4609900127` | `4fc53b2832` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | seq_sep | sobel | 64² | `4609900127` | `4fc53b2832` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | simd | sobel | 64² | `4609900127` | `4fc53b2832` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | simd_sep | sobel | 64² | `4609900127` | `4fc53b2832` |
 | chunchunmaru | fpga | sobel | 512² | `d1537f64fa` | `72cc749412` |
 | chunchunmaru | seq | sobel | 512² | `d1537f64fa` | `72cc749412` |
 | chunchunmaru | seq_sep | sobel | 512² | `d1537f64fa` | `72cc749412` |
@@ -49,10 +67,16 @@
 | chunchunmaru | simd512 | sobel | 512² | `d1537f64fa` | `72cc749412` |
 | chunchunmaru | simd_sep | sobel | 512² | `d1537f64fa` | `72cc749412` |
 | chunchunmaru | simd_sep512 | sobel | 512² | `d1537f64fa` | `72cc749412` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | cuda | sobel | 512² | `d1537f64fa` | `72cc749412` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | cuda_tiled | sobel | 512² | `d1537f64fa` | `72cc749412` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | seq | sobel | 512² | `d1537f64fa` | `72cc749412` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | seq_sep | sobel | 512² | `d1537f64fa` | `72cc749412` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | simd | sobel | 512² | `d1537f64fa` | `72cc749412` |
+| gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE | simd_sep | sobel | 512² | `d1537f64fa` | `72cc749412` |
 
 ## Derivado de la validación contra seq
 
-Cada backend se validó contra `seq` con el mismo filtro, tamaño y semilla. Como |A − B| ≤ |A − seq| + |B − seq|, el error entre dos plataformas está acotado por la suma de sus errores contra `seq`. Solo vale si la imagen y la salida de `seq` son iguales en todas las máquinas. Eso lo confirman los digests, y hoy hay digests de: chunchunmaru. Las filas que mezclan máquinas sin digest propio son derivadas, no verificadas.
+Cada backend se validó contra `seq` con el mismo filtro, tamaño y semilla. Como |A − B| ≤ |A − seq| + |B − seq|, el error entre dos plataformas está acotado por la suma de sus errores contra `seq`. Solo vale si la imagen y la salida de `seq` son iguales en todas las máquinas. Eso lo confirman los digests, y hoy hay digests de: chunchunmaru, gabriel-ASUS-TUF-Gaming-A15-FA507RE-FA507RE. Las filas que mezclan máquinas sin digest propio son derivadas, no verificadas.
 
 | Caso | Filtro | Tamaño | Error de cada clase | Cota de la diferencia |
 |---|---|---|---|---|
