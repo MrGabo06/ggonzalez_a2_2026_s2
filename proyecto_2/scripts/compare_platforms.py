@@ -6,8 +6,8 @@ Usage (from proyecto_2):
 
 Inputs:
     results/*.csv           one CSV per CPU/GPU machine (make report)
-    results/fpga/*.csv      fpga rows (make fpga_jtag_bench) and the CPU baseline measured on the
-                            host that drives the board (make fpga_baseline), same sizes as the FPGA
+    results/fpga/*.csv      fpga rows (make fpga_jtag_bench, merged across files) and the CPU baseline
+                            measured on the host that drives the board (make fpga_baseline), same sizes
 
 Outputs in results/figuras/:
     comparativa_tabla.md        FPGA against its own host, and every platform at a common size
@@ -55,13 +55,13 @@ def is_fpga(backend):
 
 
 def split_fpga_dir(directory):
-    """FPGA rows come from the most complete file that has them; the rest is the host baseline."""
+    """FPGA rows are merged from every file that has them (the newest file wins for the same
+    filter and size, so a short sweep at another size adds to the others); the rest is the host baseline."""
     fpga, baseline, baseline_name = {}, {}, None
     for path in sorted(directory.glob("*.csv")):
         data = load(path)
         if any(is_fpga(k[0]) for k in data):
-            if sum(is_fpga(k[0]) for k in data) >= sum(is_fpga(k[0]) for k in fpga):
-                fpga = data
+            fpga.update({k: v for k, v in data.items() if is_fpga(k[0])})
         else:
             baseline, baseline_name = data, machine_name(path).replace("_baseline", "")
     return fpga, baseline, baseline_name
