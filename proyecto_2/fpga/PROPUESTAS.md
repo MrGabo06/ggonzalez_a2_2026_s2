@@ -90,7 +90,7 @@ Los ciclos de P1 a 512² son los del modelo de una sola franja. En la tarjeta el
 | Ciclos por píxel, Gauss | 29.1 (medido) | 12.0 (9.1 con paradas ocultas), estimado |
 | Ciclos por píxel, Sobel | 9.06 (medido) | 3.4 (3.0 con paradas ocultas), estimado |
 | Kernel a 512² (Gauss / Sobel) | 152.6 / 47.5 ms | ≈63 / 17.8 ms, estimado |
-| Frente al `seq` de la CPU host a 512² | 21x / 15x más lenta | ≈8.7x / 5.6x más lenta, estimado |
+| Frente al `seq` de la CPU host a 512² | ≈21x / 15x más lenta | ≈8.9x / 5.8x más lenta, estimado |
 | Recursos | 23 % de ALMs, 17 % de M10K, 11 % de DSP | los mismos DSP y M10K; unos 1 600 registros más, por conteo de etapas (estimación gruesa) |
 | Reloj | 50 MHz con 63 MHz de Fmax | riesgo: los multiplexores de forwarding alargan la ruta crítica y podrían bajar Fmax por debajo de 50 MHz. Hay que compilar para saberlo |
 | ISA y programas | sin cambios | sin cambios; con reordenamiento de instrucciones se acerca a la cota |
