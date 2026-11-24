@@ -19,6 +19,8 @@ flowchart TD
     V --> RES["Resultados y métricas<br/>CSV por corrida; scripts calculan speedup, eficiencia y gráficas"]
 ```
 
+**Estado al 23 nov 2026:** F1 a F5 están completos salvo lo que sigue marcado abajo: la propuesta 2 de la FPGA solo está documentada (decisión del equipo), la GPU integrada es opcional y falta el merge a `main` con el tag final. Las pruebas están en `PRUEBAS.md` y las dos propuestas de la FPGA en `fpga/PROPUESTAS.md`.
+
 Todos los backends implementan la misma interfaz y reciben la misma imagen y filtro, así que agregar una variante nueva solo requiere un archivo en `backends/`.
 
 ## Milestones funcionales
@@ -32,7 +34,7 @@ Terminado cuando `dlp_bench --backend seq --size 1024` corre y escribe una image
 - [x] Interfaz común de backend: `init`, `run(imagen, filtro, salida)`, `cleanup`
 - [x] Lectura y escritura de imágenes PGM en escala de grises y generador de imágenes sintéticas por tamaño y semilla
 - [x] CLI con backend, tamaño, filtro, repeticiones y archivo de salida
-- [x] Stub en backends/fpga que responde "no disponible", para que el runner funcione sin la tarjeta
+- [x] Stub en backends/fpga que responde "no disponible", para que el runner funcione sin la tarjeta (reemplazado por el backend real en F5)
 
 ### F2 · Baseline y validación (29 oct–5 nov)
 
@@ -59,10 +61,11 @@ Terminado cuando SIMD y CUDA tienen sus 2 propuestas y ambas pasan el validador.
 
 Terminado cuando un solo script produce las tablas y gráficas de CPU y GPU.
 
-- [ ] Barrido de tamaños (por ejemplo 512², 1024², 2048², 4096²) en todas las máquinas (hecho en msi-ema con `make report`; faltan las demás)
+- [x] Barrido de tamaños (512², 1024², 2048², 4096²) en las máquinas del grupo: `msi-ema`, el portátil con Ryzen 7 6800H y RTX 3050 Ti, y `chunchunmaru` (línea base de la FPGA, 32² a 1024²)
 - [x] Cálculo automático de speedup, eficiencia paralela y escalabilidad desde los CSV
 - [x] Perfilado: perf o VTune en CPU y Nsight Compute en GPU (`make profile`)
 - [x] Tabla de diferencias numéricas CPU vs. GPU
+- [x] Eficiencia paralela de CUDA y de la FPGA (`make efficiency`) y ancho de banda de memoria (`make bandwidth`)
 - [ ] Opcional: misma corrida en GPU integrada (OpenCL en Intel o Metal en el M3)
 
 ### F5 · Acelerador FPGA (en cuanto haya acceso a la tarjeta, a más tardar 27 nov–3 dic)
@@ -73,10 +76,13 @@ Terminado cuando la FPGA procesa la imagen completa, pasa el validador y aparece
 - [x] Decodificador de instrucciones, unidad de control multiciclo, memoria en chip entrelazada y contador de ciclos (`fpga/rtl/`)
 - [x] Ensamblador (`fpga/asm/vasm.py`) y programas Gauss 5×5 y Sobel 3×3 con bucles (`fpga/programs/`)
 - [x] Testbench contra los .hex del baseline: `make fpga_test`, 0 diferencias (requiere iverilog)
-- [ ] Proyecto Quartus y top de la tarjeta
-- [ ] Propuesta 2: pipeline y reutilización de la ventana
-- [ ] Transferencia PC → FPGA → PC por JTAG e imagen completa procesada por bloques
-- [ ] Backend FPGA conectado al runner, en lugar del stub
-- [ ] Medición con contador de ciclos y SignalTap; diferencias numéricas contra CPU y GPU
+- [x] Proyecto Quartus y top de la tarjeta (`fpga/board/` autónomo y `fpga/jtag/` con Virtual JTAG): timing cerrado a 50 MHz, Fmax de 63 MHz, `make fpga_resources`
+- [x] Propuesta 2 (pipeline de 4 etapas) diseñada, estimada con un modelo validado contra la tarjeta y comparada con la propuesta 1: `fpga/PROPUESTAS.md`
+- [ ] Propuesta 2 implementada en RTL (decisión del equipo: solo documentación)
+- [x] Transferencia PC → FPGA → PC por JTAG e imagen completa procesada por franjas: `make fpga_jtag_test` y barrido hasta 1024² con `make fpga_jtag_bench`
+- [x] Backend FPGA conectado al runner, en lugar del stub (`--backend fpga`)
+- [x] Medición con contador de ciclos y SignalTap (`make fpga_signaltap_report`); diferencias numéricas contra CPU y GPU (`make numeric_diff`)
+- [x] La FPGA aparece en las mismas tablas que CPU y GPU (`make compare`)
+- [x] Estrategia de pruebas y resultados: `PRUEBAS.md`
 - [ ] Merge a master y tag de la versión final
 
