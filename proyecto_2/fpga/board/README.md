@@ -26,9 +26,13 @@ En Quartus Prime (Lite 18.1 o posterior, con soporte para Cyclone V):
 
 1. *File → Open Project* → `fpga/board/vproc_de1soc.qpf`.
 2. *Processing → Start Compilation*.
-3. Revisar el reporte de *Timing Analyzer*: el *setup slack* de `CLOCK_50` tiene que ser positivo.
+3. Revisar el reporte de *Timing Analyzer*: el *setup slack* de `CLOCK_50` tiene que ser positivo (medido: +4.086 ns, Fmax de 62.84 MHz).
 4. Conectar la tarjeta por el USB-Blaster (el puerto USB junto a la entrada de energía) y encenderla.
-5. *Tools → Programmer* → *Hardware Setup* → *DE-SoC*. Después *Auto Detect*, elegir `5CSEMA5` y asignarle `output_files/vproc_de1soc.sof`, marcar *Program/Configure* y *Start*.
+5. *Tools → Programmer* → *Hardware Setup* → *DE-SoC*. Después *Auto Detect*, elegir `5CSEMA5` y asignarle `output_files/vproc_de1soc.sof`, marcar *Program/Configure* y *Start*. También se puede por terminal, con el nombre del cable que muestra `jtagconfig`:
+
+   ```bash
+   quartus_pgm -c "DE-SoC [3-1]" -m jtag -o "p;fpga/board/output_files/vproc_de1soc.sof@2"
+   ```
 
 Cada vez que se cambie `data/` hay que volver a compilar, porque los datos van dentro del `.sof`.
 
@@ -49,7 +53,9 @@ Cada vez que se cambie `data/` hay que volver a compilar, porque los datos van d
 | `LEDR[8]` | FAIL: hay diferencias |
 | `LEDR[9]` | PASS: salida idéntica a `seq` |
 
-Resultado esperado con Gauss 32×32: `LEDR[9]` encendido y `030425` en los displays, los mismos ciclos que en simulación. A 50 MHz son 0.61 ms.
+Resultado esperado con los datos que trae el repo en `data/`, que son de **Sobel 64×64**: `LEDR[9]` y `LEDR[2]` encendidos y `038262` en los displays (con `SW[0]` arriba, `000000` píxeles distintos). Son los mismos ciclos que en simulación: 38 262, que a 50 MHz son 0.77 ms. Está probado en la tarjeta.
+
+Para probar Gauss 32×32 hay que regenerar los datos (`make fpga_board FILTER=gauss SIZE=32`) y volver a compilar. Entonces el resultado esperado es `030425` (30 425 ciclos, 0.61 ms).
 
 ## Si algo no funciona
 

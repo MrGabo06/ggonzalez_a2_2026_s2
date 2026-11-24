@@ -11,7 +11,7 @@ Usa un Virtual JTAG de Intel, como la guía sugerida en el enunciado ([GuiaJtag]
 ## Cómo funciona
 
 ```
-dlp_bench (C++) ──stdin/stdout──> quartus_stp -t vproc_jtag.tcl ──USB/JTAG──> sld_virtual_jtag
+dlp_bench (C++) ────FIFOs────> quartus_stp -t vproc_jtag.tcl ──USB/JTAG──> sld_virtual_jtag
                                                                                   │
                                                                     vjtag_bridge.v (comandos)
                                                                                   │
@@ -19,7 +19,7 @@ dlp_bench (C++) ──stdin/stdout──> quartus_stp -t vproc_jtag.tcl ──US
 ```
 
 1. `backends/fpga/fpga_backend.cpp` divide la imagen en franjas que caben en los 64 KB de memoria de datos. A cada franja le agrega el borde replicado y completa el ancho a múltiplo de 8. Después ensambla el programa (`fpga/programs/gauss5.s` o `sobel3.s`) para ese tamaño.
-2. Arranca una sola vez `quartus_stp -t fpga/jtag/vproc_jtag.tcl server` y le manda comandos de texto: `PROG`, `WRITE`, `RUN`, `READ`.
+2. Arranca una sola vez `quartus_stp -t fpga/jtag/vproc_jtag.tcl server` y le manda comandos de texto por dos FIFOs de `build/fpga/jtag/`: `PROG`, `WRITE`, `RUN`, `READ`. Se usan FIFOs y no la entrada y salida estándar porque `quartus_stp` retiene su salida cuando no es una terminal.
 3. El script convierte cada comando en scans del registro de datos del Virtual JTAG (1064 bits: 40 de encabezado y 128 bytes de datos).
 4. `vjtag_bridge.v` recibe el comando en el reloj de TCK y lo pasa al de 50 MHz. Ahí escribe o lee las memorias del VPROC, lo arranca o devuelve los ciclos.
 5. El tiempo total de `dlp_bench` incluye las transferencias por JTAG. La línea `kernel` usa los ciclos que contó el hardware (`ciclos / 50 MHz`), igual que con la GPU, y es la que se compara sin sesgo del host.
@@ -34,6 +34,7 @@ El formato exacto del registro y de los comandos está al inicio de `vjtag_bridg
 | `vjtag_bridge.v` | Comandos JTAG → puertos `host_*` del VPROC, con el cruce de reloj |
 | `vproc_jtag.tcl` | Lado de la PC: `ping` para probar, `server` para el backend |
 | `vproc_jtag.qpf` / `.qsf` / `.sdc` | Proyecto Quartus (mismos pines que `fpga/board/`) |
+| `vproc_jtag.stp`, `vproc_jtag_stp.qsf` | Revisión `vproc_jtag_stp` con un SignalTap sobre `CLOCK_50` (ver *Medición y perfilado*) |
 | `sim/` | Modelo del Virtual JTAG y co-simulación con Icarus (sin tarjeta) |
 
 ## Pasos
@@ -76,8 +77,31 @@ Mientras transfiere, `LEDR[9]` parpadea. Al terminar, los displays muestran los 
 ## Tiempos esperados
 
 - **Cómputo (línea `kernel`):** el mismo número de ciclos que en simulación. Por ejemplo, Gauss 32×32 da 30 425 ciclos (0.61 ms).
-- **Total:** lo domina el JTAG. Cada scan es una transacción USB, así que una imagen de 1024×1024 (unas 36 franjas) puede tardar decenas de segundos. Para tamaños grandes conviene `--reps 1 --warmup 0`.
+- **Total:** lo domina el JTAG. Cada scan es una transacción USB, así que una imagen de 1024×1024 (36 franjas) tarda unos 9 s medidos, a unos 270 KB/s de enlace efectivo, y de ellos el kernel es el 7 % en Gauss y el 2 % en Sobel. Para tamaños grandes conviene `--reps 1 --warmup 0`.
 - **Arranque de `quartus_stp`:** tarda unos segundos, pero ocurre en `init()` y no se mide.
+
+## Medición y perfilado
+
+Desde `proyecto_2/`, con la tarjeta programada con `vproc_jtag.sof`:
+
+```bash
+make fpga_jtag_bench                          # barrido de filtros y tamaños con --validate; CSV en results/fpga/ y tabla
+make fpga_jtag_bench FPGA_SIZES="1024" FPGA_REPS=1 FPGA_WARMUP=0
+make fpga_baseline && make compare            # seq y SIMD en esta máquina a los mismos tamaños, y la comparativa
+make efficiency && make bandwidth             # eficiencia paralela y ancho de banda
+make fpga_resources                           # recursos y Fmax de Quartus (hay que compilar antes)
+```
+
+**SignalTap.** La revisión `vproc_jtag_stp` agrega una instancia de SignalTap sobre `CLOCK_50` con 32K muestras que toma `busy`, `done`, `error`, `start`, `state`, `pc` y `opcode`, con disparo en el flanco de subida de `start` y la posición *Pre trigger*. Pasos:
+
+1. Compilar la revisión y programar `output_files/vproc_jtag_stp.sof`.
+2. En SignalTap, *Run Analysis* y esperar `Waiting for trigger`.
+3. Lanzar una sola ejecución, por ejemplo `./build/dlp_bench --backend fpga --filter sobel --size 32 --reps 1 --warmup 0`.
+4. Exportar la captura a CSV y generar el perfil: `make fpga_signaltap_report STP_CSV=results/signaltap/<archivo>.csv STP_CYCLES=<ciclos>`.
+
+Con 32K muestras caben ejecuciones de hasta unos 28 000 ciclos: Sobel 32×32 (9 942) y Gauss 16×16 (7 817), pero no Gauss 32×32 (30 425). Los CSV crudos pesan unos 3 MB y no se suben al repo.
+
+**Con SignalTap cargado no se deben tomar tiempos totales:** comparte el cable con el Virtual JTAG y los infla. Para las tablas de tiempo, programar siempre `vproc_jtag.sof`. Los ciclos del kernel no se afectan.
 
 ## Si algo no funciona
 
