@@ -115,7 +115,7 @@ python3 fpga/scripts/pipeline_model.py --branch-penalty 1  # saltos resueltos en
 
 ## 6. Dos correcciones sobre `ISA.md`
 
-Quedan señaladas aquí y no se editó `ISA.md`:
+Se detectaron al contrastar `ISA.md` con las capturas y el modelo, y ya están corregidas en `ISA.md`:
 
 - El Sobel ejecuta **22** instrucciones por 8 píxeles (6 `VLD`), no 25. Lo confirman el listado del programa y la captura de SignalTap. Para Gauss, 69 instrucciones con 25 `VLD` sí coincide con el modelo.
 - La estimación de 8 a 10 ciclos por píxel con pipeline para Gauss es optimista. El modelo da 12.0, y 9.1 en el mejor caso con las paradas ocultas.

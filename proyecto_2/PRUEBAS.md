@@ -1,13 +1,13 @@
 # Estrategia de pruebas y resultados
 
-El enunciado pide una estrategia de prueba para validar que el resultado paralelo es igual al secuencial, con la cantidad de pruebas y el tamaño de los datos. Este documento la resume. Los resultados son de la corrida del 2026-11-23 en `chunchunmaru` (i7-1165G7 con AVX-512, sin GPU) con la DE1-SoC conectada.
+El enunciado pide una estrategia de prueba para validar que el resultado paralelo es igual al secuencial, con la cantidad de pruebas y el tamaño de los datos. Este documento la resume. Los resultados son de la corrida del 2026-11-23 en `chunchunmaru` (i7-1165G7 con AVX-512, sin GPU) con la DE1-SoC conectada, y de la corrida de `test_backends` en una máquina con GPU RTX de un compañero.
 
 ## 1. Niveles de prueba
 
 | # | Nivel | Qué comprueba | Comando | Cantidad | Resultado |
 |---|---|---|---|---|---|
 | 1 | Unitarias | Validador, baseline, estadística y formato `.hex` | `make test` | 20 pruebas | 20 de 20 |
-| 2 | Backends contra `seq` | Cada backend da la misma imagen que `seq`, píxel a píxel | `make test_backends SIMD=1 AVX512=1` | 380 casos | 380 de 380 idénticos |
+| 2 | Backends contra `seq` | Cada backend da la misma imagen que `seq`, píxel a píxel | `make test_backends SIMD=1 AVX512=1` (CPU) y `make test_backends SIMD=1 CUDA=1` (GPU) | 380 casos en la CPU y 684 con GPU | 380 de 380 y 684 de 684 idénticos |
 | 3 | RTL de la FPGA en simulación | El procesador contra la salida de `seq`, y el ISA completo | `make fpga_test` | 6 casos | 6 de 6 PASS |
 | 4 | Top de la tarjeta en simulación | Carga, ejecución, comparación y displays | `make fpga_board_sim` | 1 caso | PASS |
 | 5 | Camino completo sin tarjeta | C++, Tcl y RTL por el mismo protocolo JTAG, con varias franjas | `make fpga_jtag_sim` | 3 corridas | 3 de 3 `ok` |
@@ -23,7 +23,7 @@ El enunciado pide una estrategia de prueba para validar que el resultado paralel
 
 **1. Unitarias (20).** Imágenes idénticas, un píxel distinto, PSNR conocido, tamaños distintos (debe fallar); Gauss y Sobel sobre imagen constante, determinismo del baseline, kernels separables contra pesos y contra la convolución directa; media, mediana (par e impar, sin modificar la lista, con valor atípico), desviación y lista vacía; ida y vuelta de `.hex`, formato, tamaño equivocado, línea inválida y archivo faltante.
 
-**2. Backends (380).** 5 backends (`seq_sep`, `simd`, `simd_sep`, `simd512`, `simd_sep512`) × 2 filtros × 19 tamaños × 2 semillas. Cada caso corre el backend **dos veces** sobre la misma imagen para detectar estado que sobrevive entre corridas. En una máquina con GPU se agregan `cuda` y `cuda_tiled`, esta última con 5 tamaños de bloque (16×16, 8×8, 32×8, 4×32 y 32×32). El backend `fpga` se omite salvo con `DLP_TEST_FPGA=1`, porque va por JTAG y es lento para esta cantidad de casos.
+**2. Backends (380).** 5 backends (`seq_sep`, `simd`, `simd_sep`, `simd512`, `simd_sep512`) × 2 filtros × 19 tamaños × 2 semillas. Cada caso corre el backend **dos veces** sobre la misma imagen para detectar estado que sobrevive entre corridas. En una máquina con GPU se agregan `cuda` y `cuda_tiled`, esta última con 5 tamaños de bloque (16×16, 8×8, 32×8, 4×32 y 32×32). En la máquina con la RTX (sin AVX-512) los backends son `seq_sep`, `simd`, `simd_sep`, `cuda` y `cuda_tiled`, es decir 4 + 5 configuraciones × 2 filtros × 19 tamaños × 2 semillas = 684 casos. El backend `fpga` se omite salvo con `DLP_TEST_FPGA=1`, porque va por JTAG y es lento para esta cantidad de casos.
 
 **3. Simulación de la FPGA (6).** `isa` ejercita las 20 instrucciones y compara 64 bytes; `smoke` es la ejecución dummy; Gauss y Sobel a 32×32 y 64×64 (este con semilla 7) se comparan contra la salida de `seq` exportada en `.hex`. Ciclos: 106, 80, 30 425, 9 942, 120 185 y 38 262.
 
@@ -52,6 +52,7 @@ Todas las comparaciones exigen **diferencia máxima 0**, no una tolerancia de PS
 |---|---|
 | `make test` | `All tests passed` |
 | `make test_backends SIMD=1 AVX512=1` | `Backends probados: seq_sep simd simd_sep simd512 simd_sep512` y `380/380 casos identicos a seq` |
+| `make test_backends SIMD=1 CUDA=1` (máquina con GPU) | `Backends probados: seq_sep simd simd_sep cuda cuda_tiled` y `684/684 casos identicos a seq` |
 | `make fpga_test` | 6 `PASS`, con `errors=0 max_err=0` en todos |
 | `make fpga_board_sim` | `PASS`, `LEDR[9]` encendido |
 | `make fpga_jtag_sim` | 3 corridas con `max=0 diff=0 ok=1` |
@@ -70,7 +71,7 @@ make numeric_export && make numeric_diff   # nivel 9
 
 ## 6. Límites
 
-- **Los backends de GPU no se ejecutaron con `test_backends` en esta máquina**, porque no tiene GPU. Los validan las corridas con `--validate` de las dos máquinas con GPU (error 0) y los digests, pero falta correr `make test_backends CUDA=1` en una de ellas y anotar el conteo.
+- **`test_backends` con GPU se corrió en una sola máquina** (684 de 684). En `chunchunmaru` no se puede, porque no tiene GPU. La segunda máquina con GPU solo se validó con las corridas `--validate` y los digests. Las variantes AVX-512 se probaron únicamente en `chunchunmaru`.
 - Solo hay **imágenes sintéticas**, no fotografías. La FPGA se probó con imágenes cuadradas.
 - Los benchmarks usan **una sola semilla**; la variedad de semillas está en `test_backends`.
 - No hay pruebas automáticas de fallos del enlace JTAG (cable desconectado o tiempo agotado): el backend lanza un error, pero no hay un caso que lo verifique.

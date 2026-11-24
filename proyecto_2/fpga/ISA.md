@@ -36,7 +36,7 @@ flowchart LR
 | Memoria de datos | `rtl/vproc_dmem.v` | `LANES` bancos de bytes; `VLD`/`VST` no alineados en 1 acceso |
 | Memoria de instrucciones | `rtl/vproc_imem.v` | Lectura síncrona; la escribe el host |
 
-Parámetros: `LANES = 8` (carriles), `IMEM_WORDS = 512`, `DMEM_BYTES = 16384` (64 KiB en el testbench).
+Parámetros: `LANES = 8` (carriles), `IMEM_WORDS = 512` y `DMEM_BYTES = 16384` por defecto. La memoria de datos es de 16 KiB en la prueba autónoma de la tarjeta y de 64 KiB en el testbench y en el diseño con JTAG.
 
 ### Por qué una memoria entrelazada
 
@@ -115,9 +115,11 @@ Mapa de memoria de datos que usa `run_sim.py`: la entrada con borde va en `IN = 
 | Programa | Qué calcula | Instrucciones por 8 píxeles | Ciclos por píxel |
 |---|---|---|---|
 | `programs/gauss5.s` | Gaussiano 5×5 separable en registros, `(acc + 128) >> 8` | 69 (25 de ellas `VLD`) | ≈ 29.3 |
-| `programs/sobel3.s` | Sobel x 3×3, `VABS` y saturación de `VST` | 25 (6 `VLD`) | ≈ 9.3 |
+| `programs/sobel3.s` | Sobel x 3×3, `VABS` y saturación de `VST` | 22 (6 `VLD`) | ≈ 9.3 |
 | `programs/smoke.s` | Ejecución dummy: suma 1 a 16 píxeles con saturación | — | — |
 | `programs/isa_test.s` | Ejercita las 20 instrucciones y compara 64 bytes | — | — |
+
+La columna de ciclos es la de simulación. En la tarjeta a 512² se midieron 29.1 (Gauss) y 9.06 (Sobel) ciclos por píxel. Las instrucciones por 8 píxeles son las del bucle interno y coinciden con las capturas de SignalTap.
 
 ## Cómo simular
 
@@ -152,21 +154,40 @@ Validación contra `seq` con tolerancia 0, en todos los casos sin diferencias:
 
 Los ciclos crecen de forma lineal con el número de píxeles: el costo fijo (cargar constantes, recorrer filas) se diluye y los ciclos por píxel bajan un poco con el tamaño.
 
+## Resultados en la tarjeta
+
+Medidos con el contador de ciclos del hardware (`make fpga_jtag_bench`), todos validados contra `seq` con error 0 (`results/fpga/`):
+
+| Tamaño | Gauss: ciclos | Gauss: ciclos/píxel | Sobel: ciclos | Sobel: ciclos/píxel |
+|---|---|---|---|---|
+| 32² | 30 425 | 29.71 | 9 942 | 9.71 |
+| 64² | 120 185 | 29.34 | 38 262 | 9.34 |
+| 128² | 477 881 | 29.17 | 150 198 | 9.17 |
+| 512² | 7 628 300 | 29.10 | 2 375 165 | 9.06 |
+| 1024² | 31 026 600 | 29.59 | 9 700 750 | 9.25 |
+
+Hasta 128² (una sola franja) coinciden con el modelo de ciclos, que a su vez reproduce la simulación. Desde 256² la imagen se procesa en varias franjas por el tamaño de la memoria de datos. El perfil interno con SignalTap da un CPI de 3.251 en Sobel y 3.342 en Gauss (`results/signaltap/`). Los recursos y el Fmax están en `results/quartus/recursos.md`.
+
 ## Dos propuestas de microarquitectura
 
-| | Propuesta 1 (implementada) | Propuesta 2 (siguiente paso) |
+La comparación detallada, con el modelo de ciclos y los criterios, está en `PROPUESTAS.md`.
+
+| | Propuesta 1 (implementada) | Propuesta 2 (documentada, no implementada) |
 |---|---|---|
 | Control | Multiciclo, CPI 3–4 | Pipeline de 4 etapas, CPI ≈ 1 |
 | Ventana | 25 `VLD` por grupo de 8 píxeles (reutiliza poco) | Registro de desplazamiento o line buffer: 1 `VLD` por fila nueva |
 | Recursos | 8 multiplicadores 18×18, 8 bancos de RAM | igual más registros de pipeline y riesgos de datos |
-| Ciclos/píxel Gauss (estimado) | 29.3 (medido) | alrededor de 8 a 10 con pipeline; menos con reutilización de ventana |
+| Ciclos/píxel Gauss | 29.1 (medido) | ≈ 12.0 estimado con pipeline (9.1 si se ocultan las paradas de carga); la reutilización de ventana no ahorra ciclos en un pipeline de un puerto |
 | Complejidad | baja; fácil de verificar | riesgos de datos y de control, *forwarding* |
 
-La propuesta 1 sirve como referencia correcta y mide el costo de la reutilización pobre de datos: el 36 % de las instrucciones del Gauss son `VLD`, y cada `VLD` cuesta 4 ciclos.
+La propuesta 1 sirve como referencia correcta y mide el costo de la reutilización pobre de datos: el 36 % de las instrucciones del bucle interno del Gauss son `VLD`, y cada `VLD` cuesta 4 ciclos.
 
-## Pendiente para la tarjeta
+## En la tarjeta
 
-- Proyecto Quartus con un *top* para la tarjeta del curso: reloj, reset y puente JTAG hacia los puertos `host_*`, por ejemplo un JTAG-to-Avalon master de Platform Designer o el In-System Memory Content Editor.
-- Backend `fpga` en C++ que haga lo mismo que el testbench por JTAG, en lugar del stub actual.
-- Procesar imágenes grandes por franjas que quepan en la memoria en chip.
-- Medición con el contador de ciclos y SignalTap, y diferencias numéricas contra CPU y GPU.
+Lo que antes estaba pendiente ya está hecho:
+
+- **Proyecto Quartus y top de la tarjeta:** `board/` (prueba autónoma con los datos en ROM) y `jtag/` (Virtual JTAG con un puente hacia los puertos `host_*`). Ver `board/README.md` y `jtag/README.md`.
+- **Backend `fpga` en C++** (`backends/fpga/fpga_backend.cpp`): divide la imagen en franjas que caben en la memoria de datos, ensambla el programa y habla con la tarjeta por JTAG.
+- **Medición** con el contador de ciclos y con SignalTap (revisión `vproc_jtag_stp`), y diferencias numéricas contra CPU y GPU (`results/numeric/diferencias.md`).
+
+Lo único sin implementar es la propuesta 2 (ver `PROPUESTAS.md`).
