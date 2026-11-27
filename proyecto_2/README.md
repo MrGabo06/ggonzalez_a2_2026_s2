@@ -18,7 +18,8 @@ Convolución 2D de imágenes en escala de grises (1 byte por píxel) con dos fil
 | `common/` | Imágenes PGM y sintéticas, filtros, validador, estadística y formato `.hex` |
 | `backends/` | Un archivo por backend: `seq/`, `simd/`, `cuda/`, `fpga/` y el registro |
 | `tests/` | Pruebas unitarias y de todos los backends contra `seq` |
-| `scripts/` | Barridos, tablas, gráficas y perfilado |
+| `scripts/` | Barridos, tablas, gráficas, perfilado y la demo con una foto |
+| `examples/` | Fotos de prueba para `make demo` (git ignora su contenido) y sus salidas en `output/` |
 | `fpga/` | ISA, RTL, ensamblador, programas, simulación, y los proyectos Quartus de `board/` y `jtag/` |
 | `results/` | CSV de las mediciones, figuras, perfilados, digests y reportes de Quartus |
 
@@ -42,6 +43,8 @@ Al cambiar `SIMD`, `AVX512`, `CUDA` o `DEBUG` hay que ejecutar `make clean` ante
 | Tarea | Comando |
 |---|---|
 | Pruebas unitarias y de backends | `make test`, `make test_backends SIMD=1 AVX512=1 CUDA=1 -j` |
+| Filtrar una foto con todos los backends y comparar las salidas | Copie la foto a `examples/` y ejecute `make demo` (agregue `FPGA=1` con la tarjeta programada) |
+| Lo mismo, por familia de backends | `make demo_prepare`, `make demo_seq`, `make demo_simd`, `make demo_cuda`, `make demo_fpga` y, al final, `make demo_images` |
 | Medir CPU y GPU y generar tablas y gráficas | `make report` |
 | Perfilado con `perf` y Nsight Compute | `make profile` |
 | Eficiencia paralela, ancho de banda | `make efficiency`, `make bandwidth` |
@@ -64,6 +67,7 @@ Al cambiar `SIMD`, `AVX512`, `CUDA` o `DEBUG` hay que ejecutar `make clean` ante
 | `results/numeric/` | Digests por máquina y `diferencias.md` |
 | `results/signaltap/` | Perfil interno del VPROC (Sobel 32×32 y Gauss 16×16) |
 | `results/quartus/` | Recursos y Fmax de los diseños |
+| `examples/output/<foto>/` | Salidas de `make demo` (no se suben a git): `montage.png`, `png/` y un `.pgm` por filtro y backend |
 
 ## Documentos
 
