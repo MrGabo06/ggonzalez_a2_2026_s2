@@ -282,6 +282,62 @@ fpga_test: $(TARGET)
 	$(FPGA_SIM) --filter gauss --size 64 --seed 7
 	$(FPGA_SIM) --filter sobel --size 64 --seed 7
 
+# ---- Demo: filter a photo with every backend ---------------------------------------------
+# Drop a photo in examples/ (git ignores its contents) and run:
+#   make demo            seq, SIMD and CUDA backends that are compiled in build/dlp_bench
+#   make demo FPGA=1     the same plus the DE1-SoC (board programmed with vproc_jtag.sof)
+# Or run one family at a time: demo_seq, demo_simd, demo_cuda, demo_fpga, and finish with
+# demo_images. Outputs go to examples/output/<photo name>/ (not build/, so `make clean` keeps them).
+# Optional: DEMO_IMAGE=<path> DEMO_SIZE=512 DEMO_REPS=1 DEMO_WARMUP=0 DEMO_FILTERS="gauss sobel"
+DEMO_IMAGE   ?=
+DEMO_SIZE    ?= 512
+DEMO_REPS    ?= 1
+DEMO_WARMUP  ?= 0
+DEMO_FILTERS ?= gauss sobel
+DEMO_OPTIONAL ?= 0
+FPGA         ?= 0
+DEMO_RUN := BIN=$(TARGET) DEMO_IMAGE="$(DEMO_IMAGE)" DEMO_SIZE=$(DEMO_SIZE) DEMO_REPS=$(DEMO_REPS) \
+            DEMO_WARMUP=$(DEMO_WARMUP) DEMO_FILTERS="$(DEMO_FILTERS)" DEMO_OPTIONAL=$(DEMO_OPTIONAL) \
+            scripts/run_demo.sh
+
+.PHONY: demo demo_prepare demo_seq demo_simd demo_cuda demo_fpga demo_images
+
+demo_prepare:
+	@$(DEMO_RUN) prepare
+
+demo_seq: $(TARGET)
+	@$(DEMO_RUN) seq
+
+demo_simd: $(TARGET)
+	@$(DEMO_RUN) simd
+
+demo_cuda: $(TARGET)
+	@$(DEMO_RUN) cuda
+
+# fpga_jtag_ping first, so a missing board or the wrong .sof fails right away
+demo_fpga: $(TARGET) fpga_jtag_ping
+	@$(DEMO_RUN) fpga
+
+demo_images:
+	@$(DEMO_RUN) images
+
+# The steps run one after another (not as prerequisites) so make -j cannot overlap the board
+# access, pollute the CPU timings or render the montage before the outputs exist. A family that
+# is not compiled is skipped, and demo_images runs last even if a backend failed.
+demo: $(TARGET)
+	@status=0; \
+	$(MAKE) --no-print-directory demo_prepare || exit 1; \
+	$(MAKE) --no-print-directory demo_seq DEMO_OPTIONAL=1 || status=1; \
+	$(MAKE) --no-print-directory demo_simd DEMO_OPTIONAL=1 || status=1; \
+	$(MAKE) --no-print-directory demo_cuda DEMO_OPTIONAL=1 || status=1; \
+	if [ "$(FPGA)" = "1" ]; then \
+	  $(MAKE) --no-print-directory demo_fpga || status=1; \
+	else \
+	  echo "[fpga] omitido (use make demo FPGA=1 con la tarjeta programada)"; \
+	fi; \
+	$(MAKE) --no-print-directory demo_images || status=1; \
+	exit $$status
+
 # Borra TODOS los resultados, también los de otras máquinas (cuidado si ya los commiteó)
 clean_results:
 	rm -rf results
@@ -323,6 +379,11 @@ help:
 	@echo "  make numeric_export   Digests de las salidas de los backends de esta maquina (results/numeric/)"
 	@echo "  make numeric_diff     Une los digests de todas las maquinas: diferencias numericas CPU, GPU y FPGA"
 	@echo "  make fpga_test        Prueba del ISA, dummy, Gauss y Sobel en simulacion (requiere iverilog)"
+	@echo "  make demo             Filtra una foto de examples/ con todos los backends compilados y arma el montaje"
+	@echo "                        (agregue FPGA=1 para incluir la tarjeta). Salidas en examples/output/<foto>/"
+	@echo "  make demo_seq         Solo seq y seq_sep       make demo_simd   Solo los SIMD compilados"
+	@echo "  make demo_cuda        Solo cuda y cuda_tiled   make demo_fpga   Solo la FPGA (hace fpga_jtag_ping antes)"
+	@echo "  make demo_images      PNG de cada salida, montaje.png y comparacion byte a byte (correr al final)"
 	@echo "  make clean            Borra la carpeta build/"
 	@echo "  make clean_results    Borra la carpeta results/ completa (todas las maquinas)"
 	@echo ""
@@ -346,6 +407,12 @@ help:
 	@echo "  BACKENDS=\"seq simd\"   Backends a medir (por defecto todos los compilados)"
 	@echo "  REPS=<N> WARMUP=<N>   Repeticiones medidas y de calentamiento (por defecto 10 y 3)"
 	@echo "  DLP_CUDA_BLOCK=32x8   Tamano de bloque de cuda_tiled (por defecto 16x16)"
+	@echo ""
+	@echo "Parametros de demo:"
+	@echo "  DEMO_IMAGE=<ruta>     Foto a filtrar (por defecto, la unica imagen de examples/)"
+	@echo "  DEMO_SIZE=<N>         Lado del recorte cuadrado en gris que reciben los backends (por defecto 512)"
+	@echo "  DEMO_REPS=<N> DEMO_WARMUP=<N>   Repeticiones y calentamiento (por defecto 1 y 0)"
+	@echo "  FPGA=1                Incluye la FPGA en make demo"
 	@echo ""
 	@echo "Ejemplos:"
 	@echo "  make build -j"
