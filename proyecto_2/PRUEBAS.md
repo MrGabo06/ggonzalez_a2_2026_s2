@@ -16,8 +16,9 @@ El enunciado pide una estrategia de prueba para validar que el resultado paralel
 | 8 | Validación en cada medición | Todas las corridas de los benchmarks usan `--validate` | `make report`, `make fpga_jtag_bench` | 222 corridas en los CSV del repo | 222 con error 0 |
 | 9 | Reproducibilidad entre máquinas | Las salidas de CPU, GPU y FPGA son idénticas byte a byte | `make numeric_export`, `make numeric_diff` | 52 digests, 2 máquinas | idénticos en los 3 casos |
 | 10 | Modelo y perfil interno | El modelo de ciclos y el SignalTap coinciden con el contador de hardware | `fpga/scripts/pipeline_model.py`, `make fpga_signaltap_report` | 6 casos y 2 capturas | diferencia 0 |
+| 11 | Demo con una foto | Una foto real da la misma imagen en todos los backends, comparada byte a byte | `make demo` (con `FPGA=1` incluye la tarjeta) | 14 corridas por foto y tamaño (6 de CPU y la FPGA, 2 filtros), con 2 fotos | `validacion ok` en todas e `IDENTICAS` por filtro, a 512² y 1024² |
 
-**Qué detecta cada nivel.** Los niveles 1 y 2 atrapan errores de lógica y de bordes sin hardware. Los niveles 3 a 5 prueban el RTL y el protocolo antes de tocar la tarjeta. El 6 y el 7 prueban el silicio. El 8 y el 9 garantizan que las mediciones del paper corresponden a salidas correctas.
+**Qué detecta cada nivel.** Los niveles 1 y 2 atrapan errores de lógica y de bordes sin hardware. Los niveles 3 a 5 prueban el RTL y el protocolo antes de tocar la tarjeta. El 6 y el 7 prueban el silicio. El 8 y el 9 garantizan que las mediciones del paper corresponden a salidas correctas. El 11 lo muestra con una foto real y deja las imágenes para verlas.
 
 ### Detalle de cada nivel
 
@@ -32,6 +33,8 @@ El enunciado pide una estrategia de prueba para validar que el resultado paralel
 **6. Hardware (4).** Gauss 32×32, Sobel 32×32, Gauss 100×100 (ancho que no es múltiplo de 8, se completa repitiendo la última columna) y Sobel 256×256 (varias franjas).
 
 **8. Validación en las mediciones (222).** 64 corridas de `msi-ema`, 48 de la ASUS con la RTX 3050 Ti, 84 de la línea base de `chunchunmaru` y 26 de la FPGA (barridos de 32² a 1024²). El error máximo es 0 en todas.
+
+**11. Demo con una foto (14 por foto y tamaño).** La foto se copia a `examples/` (git ignora su contenido), se convierte a escala de grises y se recorta al centro a un cuadrado de `DEMO_SIZE` (512 por defecto). Luego corre `seq`, `seq_sep` y las variantes SIMD y CUDA que estén compiladas, cada una con ambos filtros y `--validate`, y con `FPGA=1` el backend `fpga` (después de un `fpga_jtag_ping`). Al final, `make demo_images` escribe un PNG por salida y `montage.png`, y compara los hashes md5 de las salidas de cada filtro; falla si alguna difiere. Todo queda en `examples/output/<foto>/`. Las corridas usan 1 repetición y sin calentamiento, así que sus tiempos no son una medición: las mediciones salen de `make report` y `make fpga_jtag_bench`.
 
 ## 2. Datos de prueba
 
@@ -57,6 +60,8 @@ Todas las comparaciones exigen **diferencia máxima 0**, no una tolerancia de PS
 | `make fpga_board_sim` | `PASS`, `LEDR[9]` encendido |
 | `make fpga_jtag_sim` | 3 corridas con `max=0 diff=0 ok=1` |
 | `make fpga_jtag_test` | 4 corridas con `max=0 diff=0 ok=1`; ciclos 30 425, 9 942, 303 757 y 600 010 |
+| `make demo FPGA=1` (512², corrida del 2026-11-26) | 14 `validacion ok`, hashes idénticos en los 7 backends por filtro; kernel de la FPGA 152.566 ms (Gauss) y 47.503 ms (Sobel) |
+| `make demo FPGA=1 DEMO_SIZE=1024` (corrida del 2026-11-26) | Igual, con kernel de la FPGA 620.532 ms (Gauss) y 194.015 ms (Sobel) |
 
 ## 5. Cómo reproducirlas
 
@@ -69,10 +74,22 @@ make fpga_jtag_test                        # nivel 6 (tarjeta con fpga/jtag/outp
 make numeric_export && make numeric_diff   # nivel 9
 ```
 
+La demo con una foto (nivel 11), con la foto en `examples/` o indicada con `DEMO_IMAGE=<ruta>`:
+
+```bash
+make demo                                  # backends compilados; agregue FPGA=1 con la tarjeta programada
+make demo FPGA=1 DEMO_SIZE=1024            # otro lado del recorte (el JTAG tarda unos 21 s por filtro a 1024²)
+make demo_seq                              # por familia: demo_seq, demo_simd, demo_cuda y demo_fpga
+make demo_images                           # al final: PNG, montage.png y comparación de hashes
+```
+
+`demo_cuda` falla con la instrucción de compilación si el binario no se construyó con `CUDA=1`; `make demo` simplemente la omite.
+
 ## 6. Límites
 
 - **`test_backends` con GPU se corrió en una sola máquina** (684 de 684). En `chunchunmaru` no se puede, porque no tiene GPU. La segunda máquina con GPU solo se validó con las corridas `--validate` y los digests. Las variantes AVX-512 se probaron únicamente en `chunchunmaru`.
-- Solo hay **imágenes sintéticas**, no fotografías. La FPGA se probó con imágenes cuadradas.
+- Las pruebas automáticas y los benchmarks usan **imágenes sintéticas**. Las fotos reales solo se probaron con `make demo` (2 fotos, 512² y 1024², una repetición). La FPGA se probó con imágenes cuadradas, y la demo recorta al cuadrado.
+- **`demo_cuda` aún no se ha corrido en una máquina con GPU**: en `chunchunmaru` no hay CUDA.
 - Los benchmarks usan **una sola semilla**; la variedad de semillas está en `test_backends`.
 - No hay pruebas automáticas de fallos del enlace JTAG (cable desconectado o tiempo agotado): el backend lanza un error, pero no hay un caso que lo verifique.
 - **No hay integración continua**: las pruebas se corren a mano. Las que necesitan la tarjeta o una GPU no pueden correr en un servidor genérico.
