@@ -1,0 +1,113 @@
+==PROF== Connected to process 36831 (/home/emarojass/Escritorio/ARQUI/ggonzalez_a2_2026_s2/proyecto_2/build/dlp_bench)
+==PROF== Profiling "ConvolveTiled" - 0 (1/1): 0%....50%....100% - 17 passes
+cuda_tiled,gauss,4096x4096,rep=0,1093.51 ms
+summary,cuda_tiled,gauss,4096x4096,reps=1,warmup=0,median=1093.51,mean=1093.51,stddev=0,min=1093.51,max=1093.51 ms
+kernel,cuda_tiled,gauss,4096x4096,median=1079.68,mean=1079.68,stddev=0,min=1079.68,max=1079.68 ms
+Salida escrita en /dev/null
+==PROF== Disconnected from process 36831
+[36831] dlp_bench@127.0.0.1
+  <unnamed>::ConvolveTiled(const unsigned char *, unsigned char *, int, int, int) (256, 256, 1)x(16, 16, 1), Context 1, Stream 7, Device 0, CC 8.6
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ------------- ------------
+    Metric Name               Metric Unit Metric Value
+    ----------------------- ------------- ------------
+    DRAM Frequency          cycle/nsecond         5.99
+    SM Frequency            cycle/usecond       817.50
+    Elapsed Cycles                  cycle      1949663
+    Memory Throughput                   %        56.03
+    DRAM Throughput                     %         4.87
+    Duration                      msecond         2.38
+    L1/TEX Cache Throughput             %        56.09
+    L2 Cache Throughput                 %         8.53
+    SM Active Cycles                cycle   1947363.97
+    Compute (SM) Throughput             %        86.43
+    ----------------------- ------------- ------------
+
+    INF   The kernel is utilizing greater than 80.0% of the available compute or memory performance of the device. To   
+          further improve performance, work will likely need to be shifted from the most utilized to another unit.      
+          Start by analyzing workloads in the Compute Workload Analysis section.                                        
+
+    Section: Compute Workload Analysis
+    -------------------- ----------- ------------
+    Metric Name          Metric Unit Metric Value
+    -------------------- ----------- ------------
+    Executed Ipc Active   inst/cycle         3.46
+    Executed Ipc Elapsed  inst/cycle         3.46
+    Issue Slots Busy               %        86.52
+    Issued Ipc Active     inst/cycle         3.46
+    SM Busy                        %        86.52
+    -------------------- ----------- ------------
+
+    INF   ALU is the highest-utilized pipeline (55.9%) based on active cycles, taking into account the rates of its     
+          different instructions. It executes integer and logic operations. It is well-utilized, but should not be a    
+          bottleneck.                                                                                                   
+
+    Section: Memory Workload Analysis
+    --------------------------- ------------ ------------
+    Metric Name                  Metric Unit Metric Value
+    --------------------------- ------------ ------------
+    Memory Throughput           Gbyte/second        14.02
+    Mem Busy                               %        31.76
+    Max Bandwidth                          %        56.03
+    L1/TEX Hit Rate                        %        15.74
+    L2 Compression Success Rate            %            0
+    L2 Compression Ratio                                0
+    L2 Hit Rate                            %        85.60
+    Mem Pipes Busy                         %        56.03
+    --------------------------- ------------ ------------
+
+    Section: Warp State Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Warp Cycles Per Issued Instruction             cycle        13.10
+    Warp Cycles Per Executed Instruction           cycle        13.10
+    Avg. Active Threads Per Warp                                31.80
+    Avg. Not Predicated Off Threads Per Warp                    29.64
+    ---------------------------------------- ----------- ------------
+
+    WRN   The optional metric smsp__pcsamp_sample_count could not be found. Collecting it as an additional metric could 
+          enable the rule to provide more guidance.                                                                     
+
+    Section: Instruction Statistics
+    ---------------------------------------- ----------- ------------
+    Metric Name                              Metric Unit Metric Value
+    ---------------------------------------- ----------- ------------
+    Avg. Executed Instructions Per Scheduler        inst   1684821.33
+    Executed Instructions                           inst    202178560
+    Avg. Issued Instructions Per Scheduler          inst   1684953.33
+    Issued Instructions                             inst    202194400
+    ---------------------------------------- ----------- ------------
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   256
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                  65536
+    Registers Per Thread             register/thread              40
+    Shared Memory Configuration Size           Kbyte           16.38
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block       byte/block             400
+    Static Shared Memory Per Block        byte/block               0
+    # SMs                                         SM              30
+    Threads                                   thread        16777216
+    Uses Green Context                                             0
+    Waves Per SM                                              364.09
+    -------------------------------- --------------- ---------------
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Block Limit SM                        block           16
+    Block Limit Registers                 block            6
+    Block Limit Shared Mem                block           10
+    Block Limit Warps                     block            6
+    Theoretical Active Warps per SM        warp           48
+    Theoretical Occupancy                     %          100
+    Achieved Occupancy                        %        94.81
+    Achieved Active Warps Per SM           warp        45.51
+    ------------------------------- ----------- ------------
+

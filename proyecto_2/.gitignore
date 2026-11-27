@@ -1,0 +1,22 @@
+# Compilación y salidas del framework
+build/
+*.pgm
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+
+# Simulación (Icarus / gtkwave), por si se generan fuera de build/
+*.vcd
+*.vvp
+
+# Quartus (fpga/board/ y fpga/jtag/): todo esto se regenera al compilar
+db/
+incremental_db/
+output_files/
+greybox_tmp/
+*.qws
+*.bak
+*.qarlog
+c5_pin_model_dump.txt
